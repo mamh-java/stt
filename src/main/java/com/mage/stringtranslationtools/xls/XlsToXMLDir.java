@@ -42,7 +42,8 @@ import jxl.read.biff.BiffException;
 
 public class XlsToXMLDir {
     private static final boolean ISSORTED = false;
-    private static final String SHEET_NAME = "strings";
+    private static final String STRINGS_SHEET_NAME = "strings";
+    private static final String VALUES_SHEET_NAME = "values";
 
     public XlsToXMLDir() {
     }
@@ -53,19 +54,22 @@ public class XlsToXMLDir {
             File xmlFileDir = new File(args[2]);
 
             try {
-                Workbook workbook = Workbook.getWorkbook(xlsFile);
+                WorkbookSettings workbookSettings = new WorkbookSettings();
+                workbookSettings.setEncoding("ISO-8859-15"); //关键代码，解决中文乱码
+                Workbook workbook = Workbook.getWorkbook(xlsFile, workbookSettings);
                 boolean isOneSheet = false;
                 String[] sheetNames = workbook.getSheetNames();
                 for (String sheetName : sheetNames) {
-                    if (sheetName.startsWith(SHEET_NAME)) {
-                        isOneSheet = true; // 如果是strings开头的sheet名称。 sheet是显示在workbook窗口中的表格。一个sheet可以由1048576行和2464列构成。
+                    if (sheetName.startsWith(STRINGS_SHEET_NAME)) {
+                        isOneSheet = true; // 如果是strings开头的sheet名称。
+                        // sheet是显示在workbook窗口中的表格。一个sheet可以由1048576行和2464列构成。
                     }
                 }
 
                 if (isOneSheet) {
-                    processOneSheet(xlsFile, xmlFileDir); // 处理只有一个表格的情况
+                    processOneSheet(workbook, xmlFileDir); // 处理只有一个表格的情况
                 } else {
-                    processSeperateSheet(xlsFile, xmlFileDir);//处理多个表格的情况，也就是表格拆分存放的情况
+                    processSeperateSheet(workbook, xmlFileDir);//处理多个表格的情况，也就是表格拆分存放的情况
                 }
             } catch (BiffException | IOException e) {
                 e.printStackTrace();
@@ -77,60 +81,46 @@ public class XlsToXMLDir {
     /**
      * 处理多个表格的情况，也就是表格拆分存放的情况
      *
-     * @param xlsFile    excel 文件
+     * @param workbook    excel workbook
      * @param xmlFileDir 输出的strings.xml 目录
      */
-    private static void processSeperateSheet(File xlsFile, File xmlFileDir) {
-        try {
-            Workbook workbook = Workbook.getWorkbook(xlsFile);
-            String[] sheetNames = workbook.getSheetNames();
-            for (String sheetName : sheetNames) {
-                if (sheetName.startsWith("values-")) {
-                    extractXMLFromOneSheet(workbook.getSheet(sheetName), xmlFileDir);
-                }
+    private static void processSeperateSheet(Workbook workbook, File xmlFileDir) {
+        String[] sheetNames = workbook.getSheetNames();
+        for (String sheetName : sheetNames) {
+            if (sheetName.startsWith(VALUES_SHEET_NAME)) {
+                extractXMLFromOneSheet(workbook.getSheet(sheetName), xmlFileDir);
             }
-        } catch (BiffException | IOException e) {
-            e.printStackTrace();
         }
-
     }
 
     /**
      * 处理只有一个表格的情况
      *
-     * @param xlsFile    excel 文件
+     * @param workbook    excel 文件
      * @param xmlFileDir 输出的strings.xml 目录
      */
-    private static void processOneSheet(File xlsFile, File xmlFileDir) {
-        try {
-            WorkbookSettings workbookSettings = new WorkbookSettings();
-            workbookSettings.setEncoding("ISO-8859-15"); //关键代码，解决中文乱码
-            Workbook workbook = Workbook.getWorkbook(xlsFile, workbookSettings);
-            extractXMLFromOneSheet(workbook.getSheet("strings"), xmlFileDir);
-        } catch (BiffException | IOException e) {
-            e.printStackTrace();
-        }
-
+    private static void processOneSheet(Workbook workbook, File xmlFileDir) {
+        extractXMLFromOneSheet(workbook.getSheet(STRINGS_SHEET_NAME), xmlFileDir);
     }
 
     private static void extractXMLFromOneSheet(Sheet sheet, File xmlFileDir) {
         String pastPath = null;
+
         List<Item> items = new ArrayList<>();
-        int column = sheet.getColumns();
+
+        int column = sheet.getColumns();//工作簿列数
+
         List<String> valuesSet = new ArrayList<>();
 
         int columnCount;
         String valuesDir;
-        for (columnCount = 2; columnCount < column; ++columnCount) {
+        for (columnCount = 3; columnCount < column; ++columnCount) {
             valuesDir = sheet.getCell(columnCount, 0).getContents();
             if (valuesDir != null && valuesDir.length() != 0) {
                 Utils.logout("COLUMN:" + sheet.getCell(columnCount, 0).getContents());
                 valuesSet.add(sheet.getCell(columnCount, 0).getContents());
             }
         }
-
-        valuesSet = valuesSet.subList(1, valuesSet.size());
-        columnCount = 3;
 
         for (Iterator var8 = valuesSet.iterator(); var8.hasNext(); ++columnCount) {
             valuesDir = (String) var8.next();
