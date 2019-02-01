@@ -25,7 +25,8 @@ package com.mage.stringtranslationtools.xls;
 
 import com.mage.stringtranslationtools.EnviromentBuilder;
 import com.mage.stringtranslationtools.Item;
-import com.mage.stringtranslationtools.Utils;
+
+import org.apache.commons.collections.CollectionUtils;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -40,10 +41,31 @@ import jxl.Workbook;
 import jxl.WorkbookSettings;
 import jxl.read.biff.BiffException;
 
+/**
+ * String Name	            App Path        备注      values                          values-zh-rCN
+ * S:exlight_settings      /ES                     Lighting effect setting         灯效设置
+ * S:exlight_logo_scene    /ES                     Logo scenario                   LOGO场景
+ * S:aaa                   /OTA                    Lighting effect setting         灯效设置
+ * S:bbb                   /OTA                    Logo scenario                   LOGO场景
+ * S:aaa                   /push                   Lighting effect setting         灯效设置
+ * S:bbb                   /push                   Logo scenario                   LOGO场景
+ */
 public class XlsToXMLDir {
     private static final boolean ISSORTED = false;
     private static final String STRINGS_SHEET_NAME = "strings";
     private static final String VALUES_SHEET_NAME = "values";
+
+    /**
+     * xml文件的 声明行的内容
+     */
+    private static final String XML_DECLARATION = "<?xml version=\"1.0\" encoding=\"utf-8\"?>";
+
+    private static final String XML_FILE_NAME = "strings.xml";
+    /**
+     * strings.xml 中的主标签<resources> </resources>,
+     */
+    private static final String XML_RESOURCES_BEGIN = "<resources xmlns:xliff=\"urn:oasis:names:tc:xliff:document:1.2\">";
+    private static final String XML_RESOURCES_END = "</resources>";
 
     public XlsToXMLDir() {
     }
@@ -81,7 +103,7 @@ public class XlsToXMLDir {
     /**
      * 处理多个表格的情况，也就是表格拆分存放的情况
      *
-     * @param workbook    excel workbook
+     * @param workbook   excel workbook
      * @param xmlFileDir 输出的strings.xml 目录
      */
     private static void processSeperateSheet(Workbook workbook, File xmlFileDir) {
@@ -96,7 +118,7 @@ public class XlsToXMLDir {
     /**
      * 处理只有一个表格的情况
      *
-     * @param workbook    excel 文件
+     * @param workbook   excel 文件
      * @param xmlFileDir 输出的strings.xml 目录
      */
     private static void processOneSheet(Workbook workbook, File xmlFileDir) {
@@ -104,43 +126,42 @@ public class XlsToXMLDir {
     }
 
     private static void extractXMLFromOneSheet(Sheet sheet, File xmlFileDir) {
-        String pastPath = null;
-
         List<Item> items = new ArrayList<>();
 
         int column = sheet.getColumns();//工作簿列数
 
-        List<String> valuesSet = new ArrayList<>();
+        List<String> valuesSet = new ArrayList<>();//存放语言种类
 
         int columnCount;
-        String valuesDir;
         for (columnCount = 3; columnCount < column; ++columnCount) {
-            valuesDir = sheet.getCell(columnCount, 0).getContents();
+            String valuesDir = sheet.getCell(columnCount, 0).getContents();
             if (valuesDir != null && valuesDir.length() != 0) {
-                Utils.logout("COLUMN:" + sheet.getCell(columnCount, 0).getContents());
-                valuesSet.add(sheet.getCell(columnCount, 0).getContents());
+                valuesSet.add(sheet.getCell(columnCount, 0).getContents());//第1行，从第4列开始
             }
         }
 
-        for (Iterator var8 = valuesSet.iterator(); var8.hasNext(); ++columnCount) {
-            valuesDir = (String) var8.next();
-            pastPath = sheet.getCell(1, 1).getContents();
-            int lineCounter = sheet.getRows();
+        columnCount = 3;
+        for (Iterator iterator = valuesSet.iterator(); iterator.hasNext(); ++columnCount) {
+            String valuesDir = (String) iterator.next();
 
-            for (int i = 1; i < lineCounter; ++i) {
-                String name = sheet.getCell(0, i).getContents();
+            String pastPath = sheet.getCell(1, 1).getContents();// 先获取第2行2列的那个 app path的值
+
+            int lineCounter = sheet.getRows();//获取行数
+
+            for (int i = 1; i < lineCounter; ++i) { //遍历sheet中的每一行
+                String name = sheet.getCell(0, i).getContents();//getCell(int column, int row); 获取1列， i 行，i从第一行开始，表示的是 String Name
+
                 if (name != null && name.length() != 0) {
-                    String path = sheet.getCell(1, i).getContents();
-                    String stringBase = sheet.getCell(2, i).getContents();
-                    String stringTranslation = sheet.getCell(columnCount, i).getContents();
+                    String path = sheet.getCell(1, i).getContents();// 第2列，i行单元格的内容，第2列表示 APP Path
 
-                    Utils.logout("string: " + name + ", path: " + path + ", stringBase:" + stringBase + ", stringTranslation:" + stringTranslation + ", pastPath:" + pastPath);
+                    String stringBase = sheet.getCell(2, i).getContents();//第3列，表示备注啊
 
-                    if (path.equals(pastPath)) {
-                        Utils.logout("XXXX");
-                    } else {
-                        Utils.logout("YYYY");
-                        writeItemsToXML(items, valuesDir, xmlFileDir);
+                    String stringTranslation = sheet.getCell(columnCount, i).getContents();//从第4列开始是values各个语言对应的字符串值
+
+
+                    if (path.equals(pastPath)) {// 如果当前path等于之前的那个path，也就是当前行app path等于上一行的，说明还是在一个app里面的，
+                    } else {// 到了这里不相等了，说明换另外一个app了
+                        writeItemsToXML(items, valuesDir, xmlFileDir);//不相等了说明一个app的一个语言的解析完毕，可以写入xml文件了
                         items = new ArrayList<>();
                     }
 
@@ -148,189 +169,207 @@ public class XlsToXMLDir {
                     items.add(new Item(name, path, stringBase, stringTranslation));
                 }
             }
-
             writeItemsToXML(items, valuesDir, xmlFileDir);
-            pastPath = null;
             items = new ArrayList<>();
         }
 
     }
 
-    public static void writeItemsToXML(List<Item> items, String valuesDir, File fileDirBase) {
+    private static void writeItemsToXML(List<Item> items, String valuesDir, File fileDirBase) {
         if (items.size() != 0) {
             try {
-                String resPath = ((Item) items.get(0)).getPath();
+                String resPath = items.get(0).getPath();
+
                 resPath = resPath.replace('/', File.separatorChar);
+
+                // 拼接出来一个类似  \ExLightService\res\values 这样的路径
                 String fileDir = resPath + File.separator + "res" + File.separator + valuesDir;
                 File file = new File(fileDirBase, fileDir);
+
                 if (!file.exists()) {
-                    file.mkdirs();
+                    boolean ret = file.mkdirs();
                 }
 
-                BufferedWriter fw = new BufferedWriter(new FileWriter(new File(file, "strings.xml")));
-                fw.write("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
+                BufferedWriter fw = new BufferedWriter(new FileWriter(new File(file, XML_FILE_NAME)));
+
+                fw.write(XML_DECLARATION);
                 fw.newLine();
-                fw.write("<resources xmlns:xliff=\"urn:oasis:names:tc:xliff:document:1.2\">");
+                fw.write(XML_RESOURCES_BEGIN);
                 fw.newLine();
+
                 List<Item> itemsTemp = null;
                 String lastName = null;
-                Iterator var10 = items.iterator();
 
-                while (var10.hasNext()) {
-                    Item item = (Item) var10.next();
-                    if (item.getName().startsWith("S:")) {
+                for (Item item : items) {
+                    if (item.getName().startsWith("S:")) {// S: 开头的是 表示字符串的 要存放到 <string name=""></string> 标签中的
+                        //第一次这个itemsTemp是null,每次都存放一个item，存放好下次循环过来就会调用 writeItemToResources()方法写入文件
                         writeItemToResources(itemsTemp, fw);
+
                         itemsTemp = new ArrayList<>();
                         lastName = item.getName();
                         itemsTemp.add(item);
-                    } else {
-                        String itemName;
-                        if (item.getName().startsWith("P:")) {
-                            itemName = item.getName().substring(0, item.getName().lastIndexOf(":"));
-                            if (itemName.equals(lastName)) {
-                                lastName = itemName;
-                                itemsTemp.add(item);
-                            } else {
-                                writeItemToResources(itemsTemp, fw);
-                                itemsTemp = new ArrayList<>();
-                                lastName = itemName;
-                                itemsTemp.add(item);
-                            }
-                        } else if (item.getName().startsWith("A:")) {
-                            itemName = item.getName().substring(0, item.getName().lastIndexOf(":"));
-                            if (itemName.equals(lastName)) {
-                                lastName = itemName;
-                                itemsTemp.add(item);
-                            } else {
-                                writeItemToResources(itemsTemp, fw);
-                                itemsTemp = new ArrayList<>();
-                                lastName = itemName;
-                                itemsTemp.add(item);
-                            }
+                    } else if (item.getName().startsWith("P:")) {
+                        String itemName = item.getName().substring(0, item.getName().lastIndexOf(":"));
+                        if (itemName.equals(lastName)) { // 也是在itemName 变化的情况下写入文件
+                            lastName = itemName;
+                            itemsTemp.add(item); // itemsTemp 对于 array会存放多个item的
+                        } else {
+                            writeItemToResources(itemsTemp, fw);
+                            itemsTemp = new ArrayList<>();
+                            lastName = itemName;
+                            itemsTemp.add(item);
+                        }
+                    } else if (item.getName().startsWith("A:")) {
+                        String itemName = item.getName().substring(0, item.getName().lastIndexOf(":"));
+                        if (itemName.equals(lastName)) {
+                            lastName = itemName;
+                            itemsTemp.add(item);
+                        } else {
+                            writeItemToResources(itemsTemp, fw);
+                            itemsTemp = new ArrayList<>();
+                            lastName = itemName;
+                            itemsTemp.add(item);
                         }
                     }
-                }
+
+                }//end while()
 
                 writeItemToResources(itemsTemp, fw);
-                fw.write("</resources>");
+                fw.write(XML_RESOURCES_END);
                 fw.newLine();
                 fw.flush();
                 fw.close();
-            } catch (IOException var12) {
-                var12.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
 
         }
     }
 
-    public static void writeItemToResources(List<Item> items, BufferedWriter bufferedWriter) throws IOException {
-        if (items != null && items.size() != 0) {
-            if (!isItemsAllNull(items)) {
-                Item itemFirst = (Item) items.get(0);
-                String stringName;
-                String productName;
-                String[] strs;
-                if (itemFirst.getName().startsWith("S:")) {
-                    stringName = itemFirst.getName().substring(itemFirst.getName().indexOf(":") + 1, itemFirst.getName().length());
-                    productName = null;
-                    if (stringName.indexOf(":") >= 0) {
-                        strs = stringName.split(":");
-                        productName = strs[0];
-                        stringName = strs[1];
-                    }
-
-                    bufferedWriter.write("    ");
-                    bufferedWriter.write("<string name=\"");
-                    bufferedWriter.write(stringName);
-                    if (productName != null) {
-                        bufferedWriter.write("\" product=\"");
-                        bufferedWriter.write(productName);
-                    }
-
-                    bufferedWriter.write("\">");
-                    bufferedWriter.write("\"" + itemFirst.getStringTranslation() + "\"");
-                    bufferedWriter.write("</string>");
-                    bufferedWriter.newLine();
-                }
-
-                Iterator var6;
-                Item item;
-                if (itemFirst.getName().startsWith("P:")) {
-                    stringName = itemFirst.getName().substring(itemFirst.getName().indexOf(":") + 1, itemFirst.getName().lastIndexOf(":"));
-                    productName = null;
-                    if (stringName.indexOf(":") >= 0) {
-                        strs = stringName.split(":");
-                        productName = strs[0];
-                        stringName = strs[1];
-                    }
-
-                    bufferedWriter.write("    ");
-                    bufferedWriter.write("<plurals name=\"");
-                    bufferedWriter.write(stringName);
-                    if (productName != null) {
-                        bufferedWriter.write("\" product=\"");
-                        bufferedWriter.write(productName);
-                    }
-
-                    bufferedWriter.write("\">");
-                    bufferedWriter.newLine();
-                    var6 = items.iterator();
-
-                    while (var6.hasNext()) {
-                        item = (Item) var6.next();
-                        String itemName = item.getName();
-                        String pluralsQuantity = itemName.substring(itemName.lastIndexOf(":") + 1, itemName.length());
-                        bufferedWriter.write("        ");
-                        bufferedWriter.write("<item quantity=\"");
-                        bufferedWriter.write(pluralsQuantity);
-                        bufferedWriter.write("\">");
-                        bufferedWriter.write("\"" + item.getStringTranslation() + "\"");
-                        bufferedWriter.write("</item>");
-                        bufferedWriter.newLine();
-                    }
-
-                    bufferedWriter.write("    ");
-                    bufferedWriter.write("</plurals>");
-                    bufferedWriter.newLine();
-                }
-
-                if (itemFirst.getName().startsWith("A:")) {
-                    stringName = itemFirst.getName().substring(itemFirst.getName().indexOf(":") + 1, itemFirst.getName().lastIndexOf(":"));
-                    productName = null;
-                    if (stringName.indexOf(":") >= 0) {
-                        strs = stringName.split(":");
-                        productName = strs[0];
-                        stringName = strs[1];
-                    }
-
-                    bufferedWriter.write("    ");
-                    bufferedWriter.write("<string-array name=\"");
-                    bufferedWriter.write(stringName);
-                    if (productName != null) {
-                        bufferedWriter.write("\" product=\"");
-                        bufferedWriter.write(productName);
-                    }
-
-                    bufferedWriter.write("\">");
-                    bufferedWriter.newLine();
-                    var6 = items.iterator();
-
-                    while (var6.hasNext()) {
-                        item = (Item) var6.next();
-                        bufferedWriter.write("        ");
-                        bufferedWriter.write("<item>");
-                        bufferedWriter.write("\"" + item.getStringTranslation() + "\"");
-                        bufferedWriter.write("</item>");
-                        bufferedWriter.newLine();
-                    }
-
-                    bufferedWriter.write("    ");
-                    bufferedWriter.write("</string-array>");
-                    bufferedWriter.newLine();
-                }
-
-            }
+    private static void writeItemToResources(List<Item> items, BufferedWriter bufferedWriter) throws IOException {
+        if (CollectionUtils.isEmpty(items)) {// 如果 集合list是空就直接返回
+            return;
         }
+        if (isItemsAllNull(items)) {
+            return;
+        }
+
+        Item itemFirst = items.get(0);
+
+        if (itemFirst.getName().startsWith("S:")) {
+            writeString(items, bufferedWriter, itemFirst);
+        }
+
+        if (itemFirst.getName().startsWith("P:")) {
+            writePlurals(items, bufferedWriter, itemFirst);
+        }
+
+        if (itemFirst.getName().startsWith("A:")) {
+            writeArray(items, bufferedWriter, itemFirst);
+        }
+
+
+    }
+
+    private static void writeArray(List<Item> items, BufferedWriter bufferedWriter, Item itemFirst) throws IOException {
+        String stringName = itemFirst.getName().substring(itemFirst.getName().indexOf(":") + 1, itemFirst.getName().lastIndexOf(":"));
+
+        String productName = null;
+        if (stringName.contains(":")) {
+            String[] strs = stringName.split(":");
+            productName = strs[0];
+            stringName = strs[1];
+        }
+
+        bufferedWriter.write("    ");
+        bufferedWriter.write("<string-array name=\"");
+        bufferedWriter.write(stringName);
+        if (productName != null) {
+            bufferedWriter.write("\" product=\"");
+            bufferedWriter.write(productName);
+        }
+
+        bufferedWriter.write("\">");
+        bufferedWriter.newLine();
+
+        for (Item item : items) {
+            bufferedWriter.write("        ");
+            bufferedWriter.write("<item>");
+            bufferedWriter.write("\"" + item.getStringTranslation() + "\"");
+            bufferedWriter.write("</item>");
+            bufferedWriter.newLine();
+        }
+
+        bufferedWriter.write("    ");
+        bufferedWriter.write("</string-array>");
+        bufferedWriter.newLine();
+    }
+
+    private static void writePlurals(List<Item> items, BufferedWriter bufferedWriter, Item itemFirst) throws IOException {
+        String stringName = itemFirst.getName().substring(itemFirst.getName().indexOf(":") + 1, itemFirst.getName().lastIndexOf(":"));
+
+        String productName = null;
+        if (stringName.contains(":")) {
+            String[] strs = stringName.split(":");
+            productName = strs[0];
+            stringName = strs[1];
+        }
+
+        bufferedWriter.write("    ");
+        bufferedWriter.write("<plurals name=\"");
+        bufferedWriter.write(stringName);
+
+        if (productName != null) {
+            bufferedWriter.write("\" product=\"");
+            bufferedWriter.write(productName);
+        }
+
+        bufferedWriter.write("\">");
+        bufferedWriter.newLine();
+
+        for (Item item : items) {
+            String itemName = item.getName();
+            String pluralsQuantity = itemName.substring(itemName.lastIndexOf(":") + 1);
+            bufferedWriter.write("        ");
+            bufferedWriter.write("<item quantity=\"");
+            bufferedWriter.write(pluralsQuantity);
+            bufferedWriter.write("\">");
+            bufferedWriter.write("\"" + item.getStringTranslation() + "\"");
+            bufferedWriter.write("</item>");
+            bufferedWriter.newLine();
+        }
+
+        bufferedWriter.write("    ");
+        bufferedWriter.write("</plurals>");
+        bufferedWriter.newLine();
+    }
+
+    private static void writeString(List<Item> items, BufferedWriter bufferedWriter, Item itemFirst) throws IOException {
+        String stringName = itemFirst.getName().substring(itemFirst.getName().indexOf(":") + 1);
+
+        String productName = null;
+        if (stringName.contains(":")) {
+            String[] strs = stringName.split(":");
+            productName = strs[0];
+            stringName = strs[1];
+        }
+
+        bufferedWriter.write("    ");
+        bufferedWriter.write("<string name=\"");
+        bufferedWriter.write(stringName);
+
+        if (productName != null) {
+            bufferedWriter.write("\" product=\"");
+            bufferedWriter.write(productName);
+        }
+        bufferedWriter.write("\">");
+
+        for (Item item : items) { // 这个items 列表只会有一个元素的，这里也使用个循环，和其他2个方法类似
+            bufferedWriter.write("\"" + item.getStringTranslation() + "\""); //插入 到 <string></string> 标签之间的值
+        }
+
+        bufferedWriter.write("</string>");
+        bufferedWriter.newLine();
     }
 
     public static boolean isItemsAllNull(List<Item> items) {
