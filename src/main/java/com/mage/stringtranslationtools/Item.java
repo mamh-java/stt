@@ -22,10 +22,26 @@
 
 package com.mage.stringtranslationtools;
 
+
 public class Item {
+    /**
+     * // String Name, 第一列表示string名称
+     */
     private String name;
+
+    /**
+     * // 第2列表示 APP Path
+     */
     private String path;
+
+    /**
+     * //第3列，表示备注啊
+     */
     private String stringBase;
+
+    /**
+     * 从第4列开始是values各个语言对应的字符串值
+     */
     private String stringTranslation;
 
     public Item(String name, String path, String stringBase, String stringTranslation) {
