@@ -37,83 +37,87 @@ import java.util.List;
 
 import jxl.Sheet;
 import jxl.Workbook;
+import jxl.WorkbookSettings;
 import jxl.read.biff.BiffException;
 
 public class XlsToXMLDir {
     private static final boolean ISSORTED = false;
+    private static final String SHEET_NAME = "strings";
 
     public XlsToXMLDir() {
     }
 
     public static void doCollectAllStrings(String[] args) {
-        if (EnviromentBuilder.isValidArgs(args)) {
+        if (EnviromentBuilder.isValidArgsThree(args)) {//检查args是否合法，需要是长度大于2的
             File xlsFile = new File(args[1]);
             File xmlFileDir = new File(args[2]);
 
             try {
                 Workbook workbook = Workbook.getWorkbook(xlsFile);
                 boolean isOneSheet = false;
-                String[] var8;
-                int var7 = (var8 = workbook.getSheetNames()).length;
-
-                for (int var6 = 0; var6 < var7; ++var6) {
-                    String sheetName = var8[var6];
-                    if (sheetName.startsWith("strings")) {
-                        isOneSheet = true;
+                String[] sheetNames = workbook.getSheetNames();
+                for (String sheetName : sheetNames) {
+                    if (sheetName.startsWith(SHEET_NAME)) {
+                        isOneSheet = true; // 如果是strings开头的sheet名称。 sheet是显示在workbook窗口中的表格。一个sheet可以由1048576行和2464列构成。
                     }
                 }
 
                 if (isOneSheet) {
-                    processOneSheet(xlsFile, xmlFileDir);
+                    processOneSheet(xlsFile, xmlFileDir); // 处理只有一个表格的情况
                 } else {
-                    processSeperateSheet(xlsFile, xmlFileDir);
+                    processSeperateSheet(xlsFile, xmlFileDir);//处理多个表格的情况，也就是表格拆分存放的情况
                 }
-            } catch (BiffException var9) {
-                var9.printStackTrace();
-            } catch (IOException var10) {
-                var10.printStackTrace();
+            } catch (BiffException | IOException e) {
+                e.printStackTrace();
             }
 
         }
     }
 
+    /**
+     * 处理多个表格的情况，也就是表格拆分存放的情况
+     *
+     * @param xlsFile    excel 文件
+     * @param xmlFileDir 输出的strings.xml 目录
+     */
     private static void processSeperateSheet(File xlsFile, File xmlFileDir) {
         try {
             Workbook workbook = Workbook.getWorkbook(xlsFile);
-            String[] var6;
-            int var5 = (var6 = workbook.getSheetNames()).length;
-
-            for (int var4 = 0; var4 < var5; ++var4) {
-                String sheetName = var6[var4];
+            String[] sheetNames = workbook.getSheetNames();
+            for (String sheetName : sheetNames) {
                 if (sheetName.startsWith("values-")) {
                     extractXMLFromOneSheet(workbook.getSheet(sheetName), xmlFileDir);
                 }
             }
-        } catch (BiffException var7) {
-            var7.printStackTrace();
-        } catch (IOException var8) {
-            var8.printStackTrace();
+        } catch (BiffException | IOException e) {
+            e.printStackTrace();
         }
 
     }
 
+    /**
+     * 处理只有一个表格的情况
+     *
+     * @param xlsFile    excel 文件
+     * @param xmlFileDir 输出的strings.xml 目录
+     */
     private static void processOneSheet(File xlsFile, File xmlFileDir) {
         try {
-            Workbook workbook = Workbook.getWorkbook(xlsFile);
+            WorkbookSettings workbookSettings = new WorkbookSettings();
+            workbookSettings.setEncoding("ISO-8859-15"); //关键代码，解决中文乱码
+            Workbook workbook = Workbook.getWorkbook(xlsFile, workbookSettings);
             extractXMLFromOneSheet(workbook.getSheet("strings"), xmlFileDir);
-        } catch (BiffException var4) {
-            var4.printStackTrace();
-        } catch (IOException var5) {
-            var5.printStackTrace();
+        } catch (BiffException | IOException e) {
+            e.printStackTrace();
         }
 
     }
 
     private static void extractXMLFromOneSheet(Sheet sheet, File xmlFileDir) {
         String pastPath = null;
-        List<Item> items = new ArrayList();
+        List<Item> items = new ArrayList<>();
         int column = sheet.getColumns();
-        List<String> valuesSet = new ArrayList();
+        List<String> valuesSet = new ArrayList<>();
 
         int columnCount;
         String valuesDir;
@@ -136,20 +140,18 @@ public class XlsToXMLDir {
             for (int i = 1; i < lineCounter; ++i) {
                 String name = sheet.getCell(0, i).getContents();
                 if (name != null && name.length() != 0) {
-                    Utils.logout("String:" + name);
                     String path = sheet.getCell(1, i).getContents();
-                    Utils.logout("Path:" + path);
                     String stringBase = sheet.getCell(2, i).getContents();
-                    Utils.logout("stringBase:" + stringBase);
                     String stringTranslation = sheet.getCell(columnCount, i).getContents();
-                    Utils.logout("stringTranslation:" + stringTranslation);
-                    Utils.logout("pastPath:" + pastPath);
+
+                    Utils.logout("string: " + name + ", path: " + path + ", stringBase:" + stringBase + ", stringTranslation:" + stringTranslation + ", pastPath:" + pastPath);
+
                     if (path.equals(pastPath)) {
                         Utils.logout("XXXX");
                     } else {
                         Utils.logout("YYYY");
                         writeItemsToXML(items, valuesDir, xmlFileDir);
-                        items = new ArrayList();
+                        items = new ArrayList<>();
                     }
 
                     pastPath = path;
@@ -159,7 +161,7 @@ public class XlsToXMLDir {
 
             writeItemsToXML(items, valuesDir, xmlFileDir);
             pastPath = null;
-            items = new ArrayList();
+            items = new ArrayList<>();
         }
 
     }
@@ -188,7 +190,7 @@ public class XlsToXMLDir {
                     Item item = (Item) var10.next();
                     if (item.getName().startsWith("S:")) {
                         writeItemToResources(itemsTemp, fw);
-                        itemsTemp = new ArrayList();
+                        itemsTemp = new ArrayList<>();
                         lastName = item.getName();
                         itemsTemp.add(item);
                     } else {
@@ -200,7 +202,7 @@ public class XlsToXMLDir {
                                 itemsTemp.add(item);
                             } else {
                                 writeItemToResources(itemsTemp, fw);
-                                itemsTemp = new ArrayList();
+                                itemsTemp = new ArrayList<>();
                                 lastName = itemName;
                                 itemsTemp.add(item);
                             }
@@ -211,7 +213,7 @@ public class XlsToXMLDir {
                                 itemsTemp.add(item);
                             } else {
                                 writeItemToResources(itemsTemp, fw);
-                                itemsTemp = new ArrayList();
+                                itemsTemp = new ArrayList<>();
                                 lastName = itemName;
                                 itemsTemp.add(item);
                             }
