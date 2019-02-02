@@ -8,8 +8,14 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.File;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+
+import jxl.Workbook;
+import jxl.WorkbookSettings;
 
 /**
  * XlsToXMLDir Tester.
@@ -20,8 +26,11 @@ import java.util.List;
  */
 public class XlsToXMLDirTest {
 
+    private Class<?> clazz;
+
     @Before
     public void before() throws Exception {
+        clazz = Class.forName("com.mage.stringtranslationtools.xls.XlsToXMLDir");
     }
 
     @After
@@ -100,17 +109,20 @@ public class XlsToXMLDirTest {
      */
     @Test
     public void testProcessSeperateSheet() throws Exception {
-        //TODO: Test goes here...
-        /*
+        File xmlFileDir = new File("test");
+        File xlsFile = new File("/home/mamh/fanyi/test.xls");
+        WorkbookSettings workbookSettings = new WorkbookSettings();
+        workbookSettings.setEncoding("ISO-8859-15"); //关键代码，解决中文乱码
+        Workbook workbook = Workbook.getWorkbook(xlsFile, workbookSettings);
+
         try {
-           Method method = XlsToXMLDir.getClass().getMethod("processSeperateSheet", Workbook.class, File.class);
-           method.setAccessible(true);
-           method.invoke(<Object>, <Parameters>);
-        } catch(NoSuchMethodException e) {
-        } catch(IllegalAccessException e) {
-        } catch(InvocationTargetException e) {
+            Method method = clazz.getDeclaredMethod("processSeperateSheet", Workbook.class, File.class);
+            method.setAccessible(true);
+            method.invoke(clazz, workbook, xmlFileDir);
+        } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+            e.printStackTrace();
         }
-        */
+
     }
 
     /**
