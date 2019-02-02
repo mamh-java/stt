@@ -23,9 +23,12 @@
 package com.mage.stringtranslationtools;
 
 
-import com.mage.stringtranslationtools.EnviromentBuilder;
-import com.mage.stringtranslationtools.Parser;
-import com.mage.stringtranslationtools.Utils;
+import org.apache.commons.lang.StringUtils;
+import org.dom4j.Attribute;
+import org.dom4j.Document;
+import org.dom4j.DocumentException;
+import org.dom4j.Element;
+import org.dom4j.io.SAXReader;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -35,12 +38,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import org.apache.commons.lang.StringUtils;
-import org.dom4j.Attribute;
-import org.dom4j.Document;
-import org.dom4j.DocumentException;
-import org.dom4j.Element;
-import org.dom4j.io.SAXReader;
 
 public class Dom4jParser implements Parser {
     private SAXReader reader = new SAXReader();
@@ -103,13 +100,13 @@ public class Dom4jParser implements Parser {
         String strName = null;
         Iterator i = root.elementIterator("string");
 
-        while(true) {
+        while (true) {
             String elementAsXML;
             Attribute productAttribute;
             String productName;
             Element element;
-            while(i.hasNext()) {
-                element = (Element)i.next();
+            while (i.hasNext()) {
+                element = (Element) i.next();
                 elementAsXML = this.stripElementName(element.asXML());
                 attribute = element.attribute("translatable");
                 if (attribute != null && !Boolean.getBoolean(attribute.getValue())) {
@@ -138,10 +135,10 @@ public class Dom4jParser implements Parser {
 
             i = root.elementIterator("plurals");
 
-            while(true) {
+            while (true) {
                 Element elementItem;
-                while(i.hasNext()) {
-                    element = (Element)i.next();
+                while (i.hasNext()) {
+                    element = (Element) i.next();
                     elementAsXML = this.stripElementName(element.asXML());
                     attribute = element.attribute("translatable");
                     if (attribute != null && !Boolean.getBoolean(attribute.getValue())) {
@@ -161,8 +158,8 @@ public class Dom4jParser implements Parser {
                             if (attribute != null && StringUtils.isNotEmpty(strName = attribute.getValue())) {
                                 Iterator itemIte = element.elementIterator("item");
 
-                                while(itemIte.hasNext()) {
-                                    elementItem = (Element)itemIte.next();
+                                while (itemIte.hasNext()) {
+                                    elementItem = (Element) itemIte.next();
                                     xmlContentMap.put("P:" + (productName != null ? productName + ":" : "") + strName + ":" + elementItem.attribute("quantity").getText(), this.stripElementName(elementItem.asXML()));
                                     if (keys != null) {
                                         keys.add("P:" + (productName != null ? productName + ":" : "") + strName + ":" + elementItem.attribute("quantity").getText());
@@ -175,9 +172,9 @@ public class Dom4jParser implements Parser {
 
                 i = root.elementIterator("string-array");
 
-                while(true) {
-                    while(i.hasNext()) {
-                        element = (Element)i.next();
+                while (true) {
+                    while (i.hasNext()) {
+                        element = (Element) i.next();
                         elementAsXML = this.stripElementName(element.asXML());
                         attribute = element.attribute("translatable");
                         if (attribute != null && !Boolean.getBoolean(attribute.getValue())) {
@@ -197,8 +194,8 @@ public class Dom4jParser implements Parser {
                                 if (attribute != null && StringUtils.isNotEmpty(strName = attribute.getValue())) {
                                     int itemElementIndex = 0;
 
-                                    for(Iterator itemIte = element.elementIterator("item"); itemIte.hasNext(); ++itemElementIndex) {
-                                        elementItem = (Element)itemIte.next();
+                                    for (Iterator itemIte = element.elementIterator("item"); itemIte.hasNext(); ++itemElementIndex) {
+                                        elementItem = (Element) itemIte.next();
                                         xmlContentMap.put("A:" + (productName != null ? productName + ":" : "") + strName + ":" + itemElementIndex, this.stripElementName(elementItem.asXML()));
                                         if (keys != null) {
                                             keys.add("A:" + (productName != null ? productName + ":" : "") + strName + ":" + itemElementIndex);

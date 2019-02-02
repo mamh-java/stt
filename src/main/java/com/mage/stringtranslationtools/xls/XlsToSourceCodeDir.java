@@ -53,47 +53,49 @@ public class XlsToSourceCodeDir {
     }
 
     public static void doCollectAllStrings(String[] args) {
-        if (EnviromentBuilder.isValidArgs(args)) {
-            File xlsFile = new File(args[1]);
-            File xmlFileDir = new File(args[2]);
+        if (EnviromentBuilder.isValidArgsThree(args)) {
+            return;
+        }
+        File xlsFile = new File(args[1]);
+        File xmlFileDir = new File(args[2]);
 
-            try {
-                Workbook workbook = Workbook.getWorkbook(xlsFile);
-                boolean isOneSheet = false;
-                String[] var8;
-                int var7 = (var8 = workbook.getSheetNames()).length;
+        try {
+            Workbook workbook = Workbook.getWorkbook(xlsFile);
+            boolean isOneSheet = false;
+            String[] var8;
+            int var7 = (var8 = workbook.getSheetNames()).length;
 
-                for (int var6 = 0; var6 < var7; ++var6) {
-                    String sheetName = var8[var6];
-                    if (sheetName.startsWith("strings")) {
-                        isOneSheet = true;
-                    }
+            for (int var6 = 0; var6 < var7; ++var6) {
+                String sheetName = var8[var6];
+                if (sheetName.startsWith("strings")) {
+                    isOneSheet = true;
                 }
-
-                if (isOneSheet) {
-                    processOneSheet(xlsFile, xmlFileDir);
-                } else {
-                    processSeperateSheet(xlsFile, xmlFileDir);
-                }
-
-                BufferedWriter writer = new BufferedWriter(new FileWriter("files.txt"));
-                Iterator var13 = translationDirSet.iterator();
-
-                while (var13.hasNext()) {
-                    String translationDir = (String) var13.next();
-                    writer.write(translationDir);
-                    writer.newLine();
-                }
-
-                writer.flush();
-                writer.close();
-            } catch (BiffException var9) {
-                var9.printStackTrace();
-            } catch (IOException var10) {
-                var10.printStackTrace();
             }
 
+            if (isOneSheet) {
+                processOneSheet(xlsFile, xmlFileDir);
+            } else {
+                processSeperateSheet(xlsFile, xmlFileDir);
+            }
+
+            BufferedWriter writer = new BufferedWriter(new FileWriter("files.txt"));
+            Iterator var13 = translationDirSet.iterator();
+
+            while (var13.hasNext()) {
+                String translationDir = (String) var13.next();
+                writer.write(translationDir);
+                writer.newLine();
+            }
+
+            writer.flush();
+            writer.close();
+        } catch (BiffException var9) {
+            var9.printStackTrace();
+        } catch (IOException var10) {
+            var10.printStackTrace();
         }
+
+
     }
 
     private static void processSeperateSheet(File xlsFile, File xmlFileDir) {

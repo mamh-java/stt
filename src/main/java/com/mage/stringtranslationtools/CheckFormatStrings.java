@@ -44,46 +44,48 @@ public class CheckFormatStrings {
         String configFileName = "all_xml.txt";
         String valuesConfigFileName = "strcheck_config.txt";
         String xmlFilePath = "allFormattedStrings.xls";
-        if (EnviromentBuilder.isValidArgs(args)) {
-            String filePath = args[1];
-            Set<String> resDirPathSet = EnviromentBuilder.scanResDirPathList(configFileName);
-            List<String> valuesSet = EnviromentBuilder.scanValuesList(valuesConfigFileName);
-            File xmlFile = new File(xmlFilePath);
+        if (EnviromentBuilder.isValidArgsTwo(args)) {
+            return;
+        }
+        String filePath = args[1];
+        Set<String> resDirPathSet = EnviromentBuilder.scanResDirPathList(configFileName);
+        List<String> valuesSet = EnviromentBuilder.scanValuesList(valuesConfigFileName);
+        File xmlFile = new File(xmlFilePath);
 
-            try {
-                WritableWorkbook workbook = Workbook.createWorkbook(xmlFile);
-                WritableSheet sheet = workbook.createSheet("strings", 0);
-                Label label = new Label(0, 0, "String Name");
-                sheet.addCell(label);
-                Label pLabel = new Label(1, 0, "App Path");
-                sheet.addCell(pLabel);
-                int count = 2;
+        try {
+            WritableWorkbook workbook = Workbook.createWorkbook(xmlFile);
+            WritableSheet sheet = workbook.createSheet("strings", 0);
+            Label label = new Label(0, 0, "String Name");
+            sheet.addCell(label);
+            Label pLabel = new Label(1, 0, "App Path");
+            sheet.addCell(pLabel);
+            int count = 2;
 
-                String resDir;
-                Iterator var14;
-                for (var14 = valuesSet.iterator(); var14.hasNext(); ++count) {
-                    resDir = (String) var14.next();
-                    Label contentLabel = new Label(count, 0, resDir);
-                    sheet.addCell(contentLabel);
-                }
-
-                workbook.write();
-                workbook.close();
-                var14 = resDirPathSet.iterator();
-
-                while (var14.hasNext()) {
-                    resDir = (String) var14.next();
-                    workbook = Workbook.createWorkbook(xmlFile, Workbook.getWorkbook(xmlFile));
-                    sheet = workbook.getSheet(0);
-                    collectAllString(filePath, resDir, valuesSet, sheet);
-                    workbook.write();
-                    workbook.close();
-                }
-            } catch (Exception var16) {
-                var16.printStackTrace();
+            String resDir;
+            Iterator var14;
+            for (var14 = valuesSet.iterator(); var14.hasNext(); ++count) {
+                resDir = (String) var14.next();
+                Label contentLabel = new Label(count, 0, resDir);
+                sheet.addCell(contentLabel);
             }
 
+            workbook.write();
+            workbook.close();
+            var14 = resDirPathSet.iterator();
+
+            while (var14.hasNext()) {
+                resDir = (String) var14.next();
+                workbook = Workbook.createWorkbook(xmlFile, Workbook.getWorkbook(xmlFile));
+                sheet = workbook.getSheet(0);
+                collectAllString(filePath, resDir, valuesSet, sheet);
+                workbook.write();
+                workbook.close();
+            }
+        } catch (Exception var16) {
+            var16.printStackTrace();
         }
+
+
     }
 
     public static void collectAllString(String filePath, String resDir, List<String> valuesSet, WritableSheet sheet) {

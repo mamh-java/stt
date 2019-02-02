@@ -23,8 +23,6 @@
 package com.mage.stringtranslationtools;
 
 
-
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -56,21 +54,30 @@ public class EnviromentBuilder {
     public EnviromentBuilder() {
     }
 
-    public static boolean isValidArgs(String[] args) {
-        if (args.length < 2) {
-            Utils.logerr("Please give three file path to check.");
-            return false;
-        } else {
+    public static boolean isValidArgsTwo(String[] args) {
+        if (args.length < 2) {//需要2命令行个参数，一个是数字，一个是文件路径
+            Utils.logerr("Please give 2 args on cmds, and one file path to check.");
             return true;
+        } else {
+            return false;
         }
     }
 
     public static boolean isValidArgsThree(String[] args) {
         if (args.length < 3) {
-            Utils.logerr("Please give three file path to check.");
-            return false;
-        } else {
+            Utils.logerr("Please give 3 args on cmds, and 2 file path to check.");
             return true;
+        } else {
+            return false;
+        }
+    }
+
+    public static boolean isValidArgsFour(String[] args) {
+        if (args.length < 4) {
+            Utils.logerr("Please give 4 args on cmds, and 3 file path to check.");
+            return true;
+        } else {
+            return false;
         }
     }
 
@@ -83,7 +90,7 @@ public class EnviromentBuilder {
             File[] var9 = files;
             int var8 = files.length;
 
-            for(int var7 = 0; var7 < var8; ++var7) {
+            for (int var7 = 0; var7 < var8; ++var7) {
                 File file = var9[var7];
                 Map<String, String> temp = parser.parseValidStringNames(file, keys);
                 xmlContentMap.putAll(temp);
@@ -102,7 +109,7 @@ public class EnviromentBuilder {
 
             String file;
             try {
-                while((file = fileReader.readLine()) != null) {
+                while ((file = fileReader.readLine()) != null) {
                     file = file.replace("/", File.separator);
                     if (file.indexOf(FILEPATH_RES) != -1) {
                         file = file.substring(1, file.indexOf(FILEPATH_RES));
@@ -132,7 +139,7 @@ public class EnviromentBuilder {
 
             String file;
             try {
-                while((file = fileReader.readLine()) != null) {
+                while ((file = fileReader.readLine()) != null) {
                     Utils.logout("scanFilterItems:" + file);
                     map.put(file, true);
                 }
@@ -155,7 +162,7 @@ public class EnviromentBuilder {
 
             String file;
             try {
-                while((file = fileReader.readLine()) != null) {
+                while ((file = fileReader.readLine()) != null) {
                     set.add(file);
                 }
             } catch (IOException var6) {
@@ -200,7 +207,7 @@ public class EnviromentBuilder {
     }
 
     public static boolean isValidKey(String key, Map<String, Boolean> filterMap) {
-        if (filterMap.get(key) != null && (Boolean)filterMap.get(key)) {
+        if (filterMap.get(key) != null && (Boolean) filterMap.get(key)) {
             Utils.logout("isValidKey = false : " + key);
             return false;
         } else {
@@ -217,10 +224,10 @@ public class EnviromentBuilder {
                 return false;
             }
 
-            String str = (String)var4.next();
+            String str = (String) var4.next();
             temp = null;
-            if (valuesResourceMap.get(str) != null && ((Map)valuesResourceMap.get(str)).get(key) != null) {
-                temp = (String)((Map)valuesResourceMap.get(str)).get(key);
+            if (valuesResourceMap.get(str) != null && ((Map) valuesResourceMap.get(str)).get(key) != null) {
+                temp = (String) ((Map) valuesResourceMap.get(str)).get(key);
             }
 
             if (temp == null) {
@@ -234,7 +241,7 @@ public class EnviromentBuilder {
             if (temp.endsWith("\"")) {
                 temp = temp.substring(0, temp.length() - 1);
             }
-        } while(!temp.isEmpty());
+        } while (!temp.isEmpty());
 
         return true;
     }
@@ -249,8 +256,8 @@ public class EnviromentBuilder {
                 return false;
             }
 
-            tempKey = (String)var7.next();
-            tempvalue = (String)valuesResource.get(tempKey);
+            tempKey = (String) var7.next();
+            tempvalue = (String) valuesResource.get(tempKey);
             if (tempvalue.startsWith("\"")) {
                 tempvalue = tempvalue.substring(1, tempvalue.length());
             }
@@ -258,7 +265,8 @@ public class EnviromentBuilder {
             if (tempvalue.endsWith("\"")) {
                 tempvalue = tempvalue.substring(0, tempvalue.length() - 1);
             }
-        } while(!isValidString("", tempvalue) || !isValidKey(tempKey + "==" + resDir, filterMap) || !isNotTranslated(tempKey, valuesSet, valuesResourceMap));
+        }
+        while (!isValidString("", tempvalue) || !isValidKey(tempKey + "==" + resDir, filterMap) || !isNotTranslated(tempKey, valuesSet, valuesResourceMap));
 
         return true;
     }
@@ -267,15 +275,15 @@ public class EnviromentBuilder {
         Map<String, String> map = new HashMap();
         Iterator var5 = valuesSet.iterator();
 
-        while(var5.hasNext()) {
-            String str = (String)var5.next();
+        while (var5.hasNext()) {
+            String str = (String) var5.next();
             String temp = null;
-            if (valuesResourceMap.get(str) != null && ((Map)valuesResourceMap.get(str)).get(key) != null) {
-                temp = (String)((Map)valuesResourceMap.get(str)).get(key);
+            if (valuesResourceMap.get(str) != null && ((Map) valuesResourceMap.get(str)).get(key) != null) {
+                temp = (String) ((Map) valuesResourceMap.get(str)).get(key);
             }
 
             if (temp == null) {
-                map.put(str,  null);
+                map.put(str, null);
             } else {
                 if (temp.startsWith("\"")) {
                     temp = temp.substring(1, temp.length());
@@ -286,12 +294,14 @@ public class EnviromentBuilder {
                 }
 
                 if (temp.isEmpty()) {
-                    map.put(str,  null);
+                    map.put(str, null);
                 }
             }
         }
 
         return map;
     }
+
+
 }
 

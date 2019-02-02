@@ -54,49 +54,50 @@ public class CollectAllDiffStringsWithParentWithXMLDir {
         String filterFileName = "strcheck_filter.txt";
         String valuesConfigFileName = "strcheck_config.txt";
         String xmlFilePath = "translated.xls";
-        if (EnviromentBuilder.isValidArgs(args)) {
-            String filePath = args[1];
-            Set<String> resDirPathSet = EnviromentBuilder.scanResDirPathList(configFileName);
-            Map<String, Boolean> filterMap = EnviromentBuilder.scanFilterItems(filterFileName);
-            List<String> valuesSet = EnviromentBuilder.scanValuesList(valuesConfigFileName);
-            File xmlFile = new File(xmlFilePath);
+        if (EnviromentBuilder.isValidArgsTwo(args)) {
+            return;
+        }
+        String filePath = args[1];
+        Set<String> resDirPathSet = EnviromentBuilder.scanResDirPathList(configFileName);
+        Map<String, Boolean> filterMap = EnviromentBuilder.scanFilterItems(filterFileName);
+        List<String> valuesSet = EnviromentBuilder.scanValuesList(valuesConfigFileName);
+        File xmlFile = new File(xmlFilePath);
 
-            try {
-                WritableWorkbook workbook = Workbook.createWorkbook(xmlFile);
-                String valueBase = (String) valuesSet.get(0);
-                List<String> valuesSetTemp = valuesSet.subList(1, valuesSet.size());
-                Iterator var15 = valuesSetTemp.iterator();
+        try {
+            WritableWorkbook workbook = Workbook.createWorkbook(xmlFile);
+            String valueBase = (String) valuesSet.get(0);
+            List<String> valuesSetTemp = valuesSet.subList(1, valuesSet.size());
+            Iterator var15 = valuesSetTemp.iterator();
 
-                String resDir;
-                while (var15.hasNext()) {
-                    resDir = (String) var15.next();
-                    WritableSheet sheet = workbook.createSheet(resDir, 0);
-                    Label label = new Label(0, 0, "String Name");
-                    sheet.addCell(label);
-                    Label pLabel = new Label(1, 0, "App Path");
-                    sheet.addCell(pLabel);
-                    Label valueBaseLabel = new Label(2, 0, valueBase);
-                    sheet.addCell(valueBaseLabel);
-                    Label contentLabel = new Label(3, 0, resDir);
-                    sheet.addCell(contentLabel);
-                }
-
-                workbook.write();
-                workbook.close();
-                var15 = resDirPathSet.iterator();
-
-                while (var15.hasNext()) {
-                    resDir = (String) var15.next();
-                    workbook = Workbook.createWorkbook(xmlFile, Workbook.getWorkbook(xmlFile));
-                    collectAllString(filePath, resDir, valuesSet, workbook, filterMap);
-                    workbook.write();
-                    workbook.close();
-                }
-            } catch (Exception var20) {
-                var20.printStackTrace();
+            String resDir;
+            while (var15.hasNext()) {
+                resDir = (String) var15.next();
+                WritableSheet sheet = workbook.createSheet(resDir, 0);
+                Label label = new Label(0, 0, "String Name");
+                sheet.addCell(label);
+                Label pLabel = new Label(1, 0, "App Path");
+                sheet.addCell(pLabel);
+                Label valueBaseLabel = new Label(2, 0, valueBase);
+                sheet.addCell(valueBaseLabel);
+                Label contentLabel = new Label(3, 0, resDir);
+                sheet.addCell(contentLabel);
             }
 
+            workbook.write();
+            workbook.close();
+            var15 = resDirPathSet.iterator();
+
+            while (var15.hasNext()) {
+                resDir = (String) var15.next();
+                workbook = Workbook.createWorkbook(xmlFile, Workbook.getWorkbook(xmlFile));
+                collectAllString(filePath, resDir, valuesSet, workbook, filterMap);
+                workbook.write();
+                workbook.close();
+            }
+        } catch (Exception var20) {
+            var20.printStackTrace();
         }
+
     }
 
     public static void outputValuesSet(WritableWorkbook workbook, String valuesName, String key, String resDir, String labelValue, String labelValueTranslation) {

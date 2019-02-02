@@ -26,7 +26,6 @@ package com.mage.stringtranslationtools.xls;
 import com.mage.stringtranslationtools.EnviromentBuilder;
 import com.mage.stringtranslationtools.Item;
 import com.mage.stringtranslationtools.Utils;
-import com.mage.stringtranslationtools.xls.XlsToXMLDir;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -36,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+
 import jxl.Sheet;
 import jxl.Workbook;
 import jxl.read.biff.BiffException;
@@ -47,36 +47,38 @@ public class XlsToSourceCodeDirDifferentDir {
     }
 
     public static void doCollectAllStrings(String[] args) {
-        if (EnviromentBuilder.isValidArgsThree(args)) {
-            File xlsFile = new File(args[1]);
-            File xmlFileDir = new File(args[2]);
-            File xmlFileOutDir = new File(args[3]);
+        if (EnviromentBuilder.isValidArgsFour(args)) {
+            return;
+        }
+        File xlsFile = new File(args[1]);
+        File xmlFileDir = new File(args[2]);
+        File xmlFileOutDir = new File(args[3]);
 
-            try {
-                Workbook workbook = Workbook.getWorkbook(xlsFile);
-                boolean isOneSheet = false;
-                String[] var9;
-                int var8 = (var9 = workbook.getSheetNames()).length;
+        try {
+            Workbook workbook = Workbook.getWorkbook(xlsFile);
+            boolean isOneSheet = false;
+            String[] var9;
+            int var8 = (var9 = workbook.getSheetNames()).length;
 
-                for(int var7 = 0; var7 < var8; ++var7) {
-                    String sheetName = var9[var7];
-                    if (sheetName.startsWith("strings")) {
-                        isOneSheet = true;
-                    }
+            for (int var7 = 0; var7 < var8; ++var7) {
+                String sheetName = var9[var7];
+                if (sheetName.startsWith("strings")) {
+                    isOneSheet = true;
                 }
-
-                if (isOneSheet) {
-                    processOneSheet(xlsFile, xmlFileDir, xmlFileOutDir);
-                } else {
-                    processSeperateSheet(xlsFile, xmlFileDir, xmlFileOutDir);
-                }
-            } catch (BiffException var10) {
-                var10.printStackTrace();
-            } catch (IOException var11) {
-                var11.printStackTrace();
             }
 
+            if (isOneSheet) {
+                processOneSheet(xlsFile, xmlFileDir, xmlFileOutDir);
+            } else {
+                processSeperateSheet(xlsFile, xmlFileDir, xmlFileOutDir);
+            }
+        } catch (BiffException var10) {
+            var10.printStackTrace();
+        } catch (IOException var11) {
+            var11.printStackTrace();
         }
+
+
     }
 
     private static void processSeperateSheet(File xlsFile, File xmlFileDir, File xmlFileOutDir) {
@@ -85,7 +87,7 @@ public class XlsToSourceCodeDirDifferentDir {
             String[] var7;
             int var6 = (var7 = workbook.getSheetNames()).length;
 
-            for(int var5 = 0; var5 < var6; ++var5) {
+            for (int var5 = 0; var5 < var6; ++var5) {
                 String sheetName = var7[var5];
                 if (sheetName.startsWith("values-")) {
                     extractXMLFromOneSheet(workbook.getSheet(sheetName), xmlFileDir, xmlFileOutDir);
@@ -119,7 +121,7 @@ public class XlsToSourceCodeDirDifferentDir {
 
         int columnCount;
         String valuesDir;
-        for(columnCount = 2; columnCount < column; ++columnCount) {
+        for (columnCount = 2; columnCount < column; ++columnCount) {
             valuesDir = sheet.getCell(columnCount, 0).getContents();
             if (valuesDir != null && valuesDir.length() != 0) {
                 Utils.logout("COLUMN:" + sheet.getCell(columnCount, 0).getContents());
@@ -127,15 +129,15 @@ public class XlsToSourceCodeDirDifferentDir {
             }
         }
 
-          valuesSet = valuesSet.subList(1, valuesSet.size());
+        valuesSet = valuesSet.subList(1, valuesSet.size());
         columnCount = 3;
 
-        for(Iterator var9 = valuesSet.iterator(); var9.hasNext(); ++columnCount) {
-            valuesDir = (String)var9.next();
+        for (Iterator var9 = valuesSet.iterator(); var9.hasNext(); ++columnCount) {
+            valuesDir = (String) var9.next();
             pastPath = sheet.getCell(1, 1).getContents();
             int lineCounter = sheet.getRows();
 
-            for(int i = 1; i < lineCounter; ++i) {
+            for (int i = 1; i < lineCounter; ++i) {
                 String name = sheet.getCell(0, i).getContents();
                 if (name != null && name.length() != 0) {
                     Utils.logout("String:" + name);
@@ -168,12 +170,12 @@ public class XlsToSourceCodeDirDifferentDir {
 
     public static void writeItemsToXML(List<Item> items, String valuesDir, File fileDirBase, File fileDirBaseOut) {
         if (items.size() != 0) {
-            String resPath = ((Item)items.get(0)).getPath();
+            String resPath = ((Item) items.get(0)).getPath();
             resPath = resPath.replace('/', File.separatorChar);
             String fileDir = resPath + File.separator + "res" + File.separator + valuesDir;
             File file = new File(fileDirBase, fileDir);
             File fileOut = new File(fileDirBaseOut, fileDir);
-            Map<String, String> valuesResource = EnviromentBuilder.readStringValueFromDir(file.getAbsolutePath(), (List)null);
+            Map<String, String> valuesResource = EnviromentBuilder.readStringValueFromDir(file.getAbsolutePath(), (List) null);
             if (items.size() != 0) {
                 StringBuffer buffer = new StringBuffer();
 
@@ -190,8 +192,8 @@ public class XlsToSourceCodeDirDifferentDir {
                     String lastName = null;
                     Iterator var13 = items.iterator();
 
-                    while(var13.hasNext()) {
-                        Item item = (Item)var13.next();
+                    while (var13.hasNext()) {
+                        Item item = (Item) var13.next();
                         if (item.getName().startsWith("S:")) {
                             writeItemToResources(itemsTemp, buffer, valuesResource);
                             itemsTemp = new ArrayList();
@@ -249,17 +251,17 @@ public class XlsToSourceCodeDirDifferentDir {
 
                 Item itemFirst;
                 String productName;
-                while(var5.hasNext()) {
-                    itemFirst = (Item)var5.next();
+                while (var5.hasNext()) {
+                    itemFirst = (Item) var5.next();
                     productName = itemFirst.getName();
-                    if (valuesResource.get(productName) == null || ((String)valuesResource.get(productName)).length() == 0) {
+                    if (valuesResource.get(productName) == null || ((String) valuesResource.get(productName)).length() == 0) {
                         isTranslated = false;
                         break;
                     }
                 }
 
                 if (!isTranslated) {
-                    itemFirst = (Item)items.get(0);
+                    itemFirst = (Item) items.get(0);
                     String[] strs;
                     String stringName;
                     if (itemFirst.getName().startsWith("S:")) {
@@ -308,8 +310,8 @@ public class XlsToSourceCodeDirDifferentDir {
                         buffer.append(System.getProperty("line.separator"));
                         var8 = items.iterator();
 
-                        while(var8.hasNext()) {
-                            item = (Item)var8.next();
+                        while (var8.hasNext()) {
+                            item = (Item) var8.next();
                             String itemName = item.getName();
                             String pluralsQuantity = itemName.substring(itemName.lastIndexOf(":") + 1, itemName.length());
                             buffer.append("        ");
@@ -347,8 +349,8 @@ public class XlsToSourceCodeDirDifferentDir {
                         buffer.append(System.getProperty("line.separator"));
                         var8 = items.iterator();
 
-                        while(var8.hasNext()) {
-                            item = (Item)var8.next();
+                        while (var8.hasNext()) {
+                            item = (Item) var8.next();
                             buffer.append("        ");
                             buffer.append("<item>");
                             buffer.append("\"" + item.getStringTranslation() + "\"");

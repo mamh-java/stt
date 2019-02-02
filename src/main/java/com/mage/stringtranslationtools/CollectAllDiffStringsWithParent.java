@@ -46,73 +46,75 @@ public class CollectAllDiffStringsWithParent {
         String filterFileName = "strcheck_filter.txt";
         String valuesConfigFileName = "strcheck_config.txt";
         String xmlFilePath = "allUntranslatedStrings.xls";
-        if (EnviromentBuilder.isValidArgs(args)) {
-            String filePath = args[1];
-            Set<String> resDirPathSet = EnviromentBuilder.scanResDirPathList(configFileName);
-            Map<String, Boolean> filterMap = EnviromentBuilder.scanFilterItems(filterFileName);
-            List<String> valuesSet = EnviromentBuilder.scanValuesList(valuesConfigFileName);
-            File xmlFile = new File(xmlFilePath);
+        if (EnviromentBuilder.isValidArgsTwo(args)) {
+            return;
+        }
+        String filePath = args[1];
+        Set<String> resDirPathSet = EnviromentBuilder.scanResDirPathList(configFileName);
+        Map<String, Boolean> filterMap = EnviromentBuilder.scanFilterItems(filterFileName);
+        List<String> valuesSet = EnviromentBuilder.scanValuesList(valuesConfigFileName);
+        File xmlFile = new File(xmlFilePath);
 
-            try {
-                WritableWorkbook workbook = Workbook.createWorkbook(xmlFile);
-                WritableSheet sheet = workbook.createSheet("strings", 0);
-                Label label = new Label(0, 0, "String Name");
-                sheet.addCell(label);
-                Label pLabel = new Label(1, 0, "App Path");
-                sheet.addCell(pLabel);
-                int count = 2;
+        try {
+            WritableWorkbook workbook = Workbook.createWorkbook(xmlFile);
+            WritableSheet sheet = workbook.createSheet("strings", 0);
+            Label label = new Label(0, 0, "String Name");
+            sheet.addCell(label);
+            Label pLabel = new Label(1, 0, "App Path");
+            sheet.addCell(pLabel);
+            int count = 2;
 
-                String resDir;
-                Iterator var16;
-                for(var16 = valuesSet.iterator(); var16.hasNext(); ++count) {
-                    resDir = (String)var16.next();
-                    Label contentLabel = new Label(count, 0, resDir);
-                    sheet.addCell(contentLabel);
-                }
-
-                workbook.write();
-                workbook.close();
-                var16 = resDirPathSet.iterator();
-
-                while(var16.hasNext()) {
-                    resDir = (String)var16.next();
-                    workbook = Workbook.createWorkbook(xmlFile, Workbook.getWorkbook(xmlFile));
-                    sheet = workbook.getSheet(0);
-                    collectAllString(filePath, resDir, valuesSet, sheet, filterMap);
-                    workbook.write();
-                    workbook.close();
-                }
-            } catch (Exception var18) {
-                var18.printStackTrace();
+            String resDir;
+            Iterator var16;
+            for (var16 = valuesSet.iterator(); var16.hasNext(); ++count) {
+                resDir = (String) var16.next();
+                Label contentLabel = new Label(count, 0, resDir);
+                sheet.addCell(contentLabel);
             }
 
+            workbook.write();
+            workbook.close();
+            var16 = resDirPathSet.iterator();
+
+            while (var16.hasNext()) {
+                resDir = (String) var16.next();
+                workbook = Workbook.createWorkbook(xmlFile, Workbook.getWorkbook(xmlFile));
+                sheet = workbook.getSheet(0);
+                collectAllString(filePath, resDir, valuesSet, sheet, filterMap);
+                workbook.write();
+                workbook.close();
+            }
+        } catch (Exception var18) {
+            var18.printStackTrace();
         }
+
+
     }
 
     public static void collectAllString(String filePath, String resDir, List<String> valuesSet, WritableSheet sheet, Map<String, Boolean> filterMap) {
         List<String> keys = new ArrayList();
-        Map<String, String> valuesResource = EnviromentBuilder.readStringValueFromDir(filePath + resDir + File.separator + "res" + File.separator + (String)valuesSet.get(0), keys);
+        Map<String, String> valuesResource = EnviromentBuilder.readStringValueFromDir(filePath + resDir + File.separator + "res" + File.separator + (String) valuesSet.get(0), keys);
         Map<String, Map<String, String>> valuesResourceMap = new HashMap();
         valuesSet = valuesSet.subList(1, valuesSet.size());
         Iterator var9 = valuesSet.iterator();
 
         String key;
-        while(var9.hasNext()) {
+        while (var9.hasNext()) {
             key = (String) var9.next();
             Map<String, String> valuesResourceTemp = new HashMap();
             int index = key.indexOf("-");
 
-            while(index != -1) {
+            while (index != -1) {
                 index = key.indexOf("-", index + 1);
                 if (index == -1) {
                     break;
                 }
 
                 key = key.substring(0, index);
-                valuesResourceTemp.putAll(EnviromentBuilder.readStringValueFromDir(filePath + resDir + File.separator + "res" + File.separator + key, (List)null));
+                valuesResourceTemp.putAll(EnviromentBuilder.readStringValueFromDir(filePath + resDir + File.separator + "res" + File.separator + key, (List) null));
             }
 
-            valuesResourceTemp.putAll(EnviromentBuilder.readStringValueFromDir(filePath + resDir + File.separator + "res" + File.separator + key, (List)null));
+            valuesResourceTemp.putAll(EnviromentBuilder.readStringValueFromDir(filePath + resDir + File.separator + "res" + File.separator + key, (List) null));
             valuesResourceMap.put(key, valuesResourceTemp);
         }
 
@@ -122,9 +124,9 @@ public class CollectAllDiffStringsWithParent {
         try {
             Iterator var16 = keys.iterator();
 
-            while(true) {
-                while(var16.hasNext()) {
-                    key = (String)var16.next();
+            while (true) {
+                while (var16.hasNext()) {
+                    key = (String) var16.next();
                     if (!key.startsWith("A:") && !key.startsWith("P:")) {
                         if (tempStringNames.size() != 0) {
                             if (EnviromentBuilder.isArrayNotTranslated(tempStringNames, valuesResource, resDir, filterMap, valuesSet, valuesResourceMap)) {
@@ -180,21 +182,21 @@ public class CollectAllDiffStringsWithParent {
     private static void writeItems(List<String> tempStringNames, WritableSheet sheet, String resDir, Map<String, String> valuesResource, List<String> valuesSet, Map<String, Map<String, String>> valuesResourceMap) throws RowsExceededException, WriteException {
         int count = sheet.getRows();
 
-        for(Iterator var8 = tempStringNames.iterator(); var8.hasNext(); ++count) {
-            String key = (String)var8.next();
+        for (Iterator var8 = tempStringNames.iterator(); var8.hasNext(); ++count) {
+            String key = (String) var8.next();
             Label labelKey = new Label(0, count, key);
             Label labelPath = new Label(1, count, resDir);
-            Label labelValue = new Label(2, count, (String)valuesResource.get(key));
+            Label labelValue = new Label(2, count, (String) valuesResource.get(key));
             sheet.addCell(labelKey);
             sheet.addCell(labelPath);
             sheet.addCell(labelValue);
             int verCount = 3;
 
-            for(Iterator var14 = valuesSet.iterator(); var14.hasNext(); ++verCount) {
-                String str = (String)var14.next();
+            for (Iterator var14 = valuesSet.iterator(); var14.hasNext(); ++verCount) {
+                String str = (String) var14.next();
                 String temp = "";
-                if (valuesResourceMap.get(str) != null && ((Map)valuesResourceMap.get(str)).get(key) != null) {
-                    temp = (String)((Map)valuesResourceMap.get(str)).get(key);
+                if (valuesResourceMap.get(str) != null && ((Map) valuesResourceMap.get(str)).get(key) != null) {
+                    temp = (String) ((Map) valuesResourceMap.get(str)).get(key);
                 }
 
                 Label contentLabel = new Label(verCount, count, temp);

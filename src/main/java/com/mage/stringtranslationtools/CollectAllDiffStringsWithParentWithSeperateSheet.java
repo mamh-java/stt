@@ -49,49 +49,51 @@ public class CollectAllDiffStringsWithParentWithSeperateSheet {
         String filterFileName = "strcheck_filter.txt";
         String valuesConfigFileName = "strcheck_config.txt";
         String xmlFilePathWithCheckDatabase = "allUntranslatedStrings.xls";
-        if (EnviromentBuilder.isValidArgs(args)) {
-            String filePath = args[1];
-            Set<String> resDirPathSet = EnviromentBuilder.scanResDirPathList(configFileName);
-            Map<String, Boolean> filterMap = EnviromentBuilder.scanFilterItems(filterFileName);
-            List<String> valuesSet = EnviromentBuilder.scanValuesList(valuesConfigFileName);
-            File xmlFileWithCheckDatabase = new File(xmlFilePathWithCheckDatabase);
+        if (EnviromentBuilder.isValidArgsTwo(args)) {
+            return;
+        }
+        String filePath = args[1];
+        Set<String> resDirPathSet = EnviromentBuilder.scanResDirPathList(configFileName);
+        Map<String, Boolean> filterMap = EnviromentBuilder.scanFilterItems(filterFileName);
+        List<String> valuesSet = EnviromentBuilder.scanValuesList(valuesConfigFileName);
+        File xmlFileWithCheckDatabase = new File(xmlFilePathWithCheckDatabase);
 
-            try {
-                String valueBase = (String) valuesSet.get(0);
-                List<String> valuesSetTemp = valuesSet.subList(1, valuesSet.size());
-                WritableWorkbook workbookWithCheckDatabase = Workbook.createWorkbook(xmlFileWithCheckDatabase);
-                Iterator var15 = valuesSetTemp.iterator();
+        try {
+            String valueBase = (String) valuesSet.get(0);
+            List<String> valuesSetTemp = valuesSet.subList(1, valuesSet.size());
+            WritableWorkbook workbookWithCheckDatabase = Workbook.createWorkbook(xmlFileWithCheckDatabase);
+            Iterator var15 = valuesSetTemp.iterator();
 
-                String resDir;
-                while (var15.hasNext()) {
-                    resDir = (String) var15.next();
-                    WritableSheet sheetWithCheckDatabase = workbookWithCheckDatabase.createSheet(resDir, 0);
-                    Label labelWithCheckDatabase = new Label(0, 0, "String Name");
-                    sheetWithCheckDatabase.addCell(labelWithCheckDatabase);
-                    Label pLabelWithCheckDatabase = new Label(1, 0, "App Path");
-                    sheetWithCheckDatabase.addCell(pLabelWithCheckDatabase);
-                    Label valueBaseLabel = new Label(2, 0, valueBase);
-                    sheetWithCheckDatabase.addCell(valueBaseLabel);
-                    Label contentLabel = new Label(3, 0, resDir);
-                    sheetWithCheckDatabase.addCell(contentLabel);
-                }
-
-                workbookWithCheckDatabase.write();
-                workbookWithCheckDatabase.close();
-                var15 = resDirPathSet.iterator();
-
-                while (var15.hasNext()) {
-                    resDir = (String) var15.next();
-                    workbookWithCheckDatabase = Workbook.createWorkbook(xmlFileWithCheckDatabase, Workbook.getWorkbook(xmlFileWithCheckDatabase));
-                    collectAllString(filePath, resDir, valuesSet, workbookWithCheckDatabase, filterMap);
-                    workbookWithCheckDatabase.write();
-                    workbookWithCheckDatabase.close();
-                }
-            } catch (Exception var20) {
-                var20.printStackTrace();
+            String resDir;
+            while (var15.hasNext()) {
+                resDir = (String) var15.next();
+                WritableSheet sheetWithCheckDatabase = workbookWithCheckDatabase.createSheet(resDir, 0);
+                Label labelWithCheckDatabase = new Label(0, 0, "String Name");
+                sheetWithCheckDatabase.addCell(labelWithCheckDatabase);
+                Label pLabelWithCheckDatabase = new Label(1, 0, "App Path");
+                sheetWithCheckDatabase.addCell(pLabelWithCheckDatabase);
+                Label valueBaseLabel = new Label(2, 0, valueBase);
+                sheetWithCheckDatabase.addCell(valueBaseLabel);
+                Label contentLabel = new Label(3, 0, resDir);
+                sheetWithCheckDatabase.addCell(contentLabel);
             }
 
+            workbookWithCheckDatabase.write();
+            workbookWithCheckDatabase.close();
+            var15 = resDirPathSet.iterator();
+
+            while (var15.hasNext()) {
+                resDir = (String) var15.next();
+                workbookWithCheckDatabase = Workbook.createWorkbook(xmlFileWithCheckDatabase, Workbook.getWorkbook(xmlFileWithCheckDatabase));
+                collectAllString(filePath, resDir, valuesSet, workbookWithCheckDatabase, filterMap);
+                workbookWithCheckDatabase.write();
+                workbookWithCheckDatabase.close();
+            }
+        } catch (Exception var20) {
+            var20.printStackTrace();
         }
+
+
     }
 
     public static void outputValuesSet(WritableWorkbook workbook, String valuesName, String key, String resDir, String labelValue, String labelValueTranslation) {

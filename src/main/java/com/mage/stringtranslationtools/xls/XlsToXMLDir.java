@@ -77,32 +77,34 @@ public class XlsToXMLDir {
 
     public static void doCollectAllStrings(String[] args) {
         if (EnviromentBuilder.isValidArgsThree(args)) {//检查args是否合法，需要是长度大于2的
-            File xlsFile = new File(args[1]);
-            File xmlFileDir = new File(args[2]);
+            return;
+        }
+        File xlsFile = new File(args[1]);
+        File xmlFileDir = new File(args[2]);
 
-            try {
-                WorkbookSettings workbookSettings = new WorkbookSettings();
-                workbookSettings.setEncoding("ISO-8859-15"); //关键代码，解决中文乱码
-                Workbook workbook = Workbook.getWorkbook(xlsFile, workbookSettings);
-                boolean isOneSheet = false;
-                String[] sheetNames = workbook.getSheetNames();
-                for (String sheetName : sheetNames) {
-                    if (sheetName.startsWith(STRINGS_SHEET_NAME)) {
-                        isOneSheet = true; // 如果是strings开头的sheet名称。
-                        // sheet是显示在workbook窗口中的表格。一个sheet可以由1048576行和2464列构成。
-                    }
+        try {
+            WorkbookSettings workbookSettings = new WorkbookSettings();
+            workbookSettings.setEncoding("ISO-8859-15"); //关键代码，解决中文乱码
+            Workbook workbook = Workbook.getWorkbook(xlsFile, workbookSettings);
+            boolean isOneSheet = false;
+            String[] sheetNames = workbook.getSheetNames();
+            for (String sheetName : sheetNames) {
+                if (sheetName.startsWith(STRINGS_SHEET_NAME)) {
+                    isOneSheet = true; // 如果是strings开头的sheet名称。
+                    // sheet是显示在workbook窗口中的表格。一个sheet可以由1048576行和2464列构成。
                 }
-
-                if (isOneSheet) {
-                    processOneSheet(workbook, xmlFileDir); // 处理只有一个表格的情况
-                } else {
-                    processSeperateSheet(workbook, xmlFileDir);//处理多个表格的情况，也就是表格拆分存放的情况
-                }
-            } catch (BiffException | IOException e) {
-                e.printStackTrace();
             }
 
+            if (isOneSheet) {
+                processOneSheet(workbook, xmlFileDir); // 处理只有一个表格的情况
+            } else {
+                processSeperateSheet(workbook, xmlFileDir);//处理多个表格的情况，也就是表格拆分存放的情况
+            }
+        } catch (BiffException | IOException e) {
+            e.printStackTrace();
         }
+
+
     }
 
     /**
