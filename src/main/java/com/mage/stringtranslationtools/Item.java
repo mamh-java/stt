@@ -44,6 +44,9 @@ public class Item {
      */
     private String stringTranslation;
 
+    public Item() {
+    }
+
     public Item(String name, String path, String stringBase, String stringTranslation) {
         this.name = name;
         this.path = path;
@@ -81,5 +84,15 @@ public class Item {
 
     public void setStringTranslation(String stringTranslation) {
         this.stringTranslation = stringTranslation;
+    }
+
+    @Override
+    public String toString() {
+        return "Item{" +
+                "name='" + name + '\'' +
+                ", path='" + path + '\'' +
+                ", stringBase='" + stringBase + '\'' +
+                ", stringTranslation='" + stringTranslation + '\'' +
+                '}';
     }
 }

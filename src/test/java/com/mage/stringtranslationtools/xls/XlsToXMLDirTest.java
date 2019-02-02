@@ -1,13 +1,15 @@
 package test.com.mage.stringtranslationtools.xls;
 
+import com.mage.stringtranslationtools.Item;
 import com.mage.stringtranslationtools.xls.XlsToXMLDir;
 
-import org.apache.commons.lang.ArrayUtils;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * XlsToXMLDir Tester.
@@ -36,29 +38,62 @@ public class XlsToXMLDirTest {
     }
 
     /**
-     * Method: writeItemsToXML(List<Item> items, String valuesDir, File fileDirBase)
-     */
-    @Test
-    public void testWriteItemsToXML() throws Exception {
-        //TODO: Test goes here...
-    }
-
-    /**
-     * Method: writeItemToResources(List<Item> items, BufferedWriter bufferedWriter)
-     */
-    @Test
-    public void testWriteItemToResources() throws Exception {
-        //TODO: Test goes here...
-    }
-
-    /**
      * Method: isItemsAllNull(List<Item> items)
      */
     @Test
     public void testIsItemsAllNull() throws Exception {
-        //TODO: Test goes here...
-    }
+        List<Item> list1 = new ArrayList<>();
+        boolean b1 = XlsToXMLDir.isItemsAllNull(list1);//空列表返回是true
+        Assert.assertTrue(b1);
 
+        List<Item> list2 = new ArrayList<>(10);
+        list2.add(null);
+        boolean b2 = XlsToXMLDir.isItemsAllNull(list2);//list 中元素是 null, 返回是true
+        Assert.assertTrue(b2);
+
+        List<Item> list3 = new ArrayList<>();
+        list3.add(new Item());
+        boolean b3 = XlsToXMLDir.isItemsAllNull(list3);//list 中元素是new Item(),里面的成员变量都是null,返回是true
+        Assert.assertTrue(b3);
+
+        List<Item> list4 = new ArrayList<>();
+        Item item4 = new Item();
+        item4.setName("44");
+        list4.add(item4);
+        boolean b4 = XlsToXMLDir.isItemsAllNull(list4);//list 中元素是new Item(),里面的stringTranslation成员变量都是null,返回是true
+        Assert.assertTrue(b4);
+
+        List<Item> list5 = new ArrayList<>();
+        Item item5 = new Item();
+        item5.setName("55");
+        item5.setPath("55");
+        list5.add(item5);
+        boolean b5 = XlsToXMLDir.isItemsAllNull(list5);//list 中元素是new Item(),里面的stringTranslation成员变量都是null,返回是true
+        Assert.assertTrue(b5);
+
+        List<Item> list6 = new ArrayList<>();
+        Item item6 = new Item();
+        item6.setName("66666");
+        item6.setPath("66666");
+        item6.setStringBase("66666");
+        list6.add(item6);
+        boolean b6 = XlsToXMLDir.isItemsAllNull(list6);//list 中元素是new Item(),里面的stringTranslation成员变量都是null,返回是true
+        Assert.assertTrue(b6);
+
+        List<Item> list7 = new ArrayList<>();
+        list7.add(new Item());
+        list7.add(new Item("7", "7", "7", "7"));
+        list7.add(new Item());
+        list7.add(new Item());
+        list7.add(new Item());
+        boolean b7 = XlsToXMLDir.isItemsAllNull(list7);
+        Assert.assertFalse(b7);
+
+        List<Item> list8 = new ArrayList<>();
+        list8.add(new Item("8", "8", "8", "8"));
+        boolean b8 = XlsToXMLDir.isItemsAllNull(list8);
+        Assert.assertFalse(b8);
+    }
 
     /**
      * Method: processSeperateSheet(Workbook workbook, File xmlFileDir)
@@ -105,6 +140,96 @@ public class XlsToXMLDirTest {
         /*
         try {
            Method method = XlsToXMLDir.getClass().getMethod("extractXMLFromOneSheet", Sheet.class, File.class);
+           method.setAccessible(true);
+           method.invoke(<Object>, <Parameters>);
+        } catch(NoSuchMethodException e) {
+        } catch(IllegalAccessException e) {
+        } catch(InvocationTargetException e) {
+        }
+        */
+    }
+
+    /**
+     * Method: writeItemsToXML(List<Item> items, String valuesDir, File fileDirBase)
+     */
+    @Test
+    public void testWriteItemsToXML() throws Exception {
+        //TODO: Test goes here...
+        /*
+        try {
+           Method method = XlsToXMLDir.getClass().getMethod("writeItemsToXML", List<Item>.class, String.class, File.class);
+           method.setAccessible(true);
+           method.invoke(<Object>, <Parameters>);
+        } catch(NoSuchMethodException e) {
+        } catch(IllegalAccessException e) {
+        } catch(InvocationTargetException e) {
+        }
+        */
+    }
+
+    /**
+     * Method: writeItemToResources(List<Item> items, BufferedWriter bufferedWriter)
+     */
+    @Test
+    public void testWriteItemToResources() throws Exception {
+        //TODO: Test goes here...
+        /*
+        try {
+           Method method = XlsToXMLDir.getClass().getMethod("writeItemToResources", List<Item>.class, BufferedWriter.class);
+           method.setAccessible(true);
+           method.invoke(<Object>, <Parameters>);
+        } catch(NoSuchMethodException e) {
+        } catch(IllegalAccessException e) {
+        } catch(InvocationTargetException e) {
+        }
+        */
+    }
+
+    /**
+     * Method: writeArray(List<Item> items, BufferedWriter bufferedWriter, Item itemFirst)
+     */
+    @Test
+    public void testWriteArray() throws Exception {
+        //TODO: Test goes here...
+        /*
+        try {
+           Method method = XlsToXMLDir.getClass().getMethod("writeArray", List<Item>.class, BufferedWriter.class, Item.class);
+           method.setAccessible(true);
+           method.invoke(<Object>, <Parameters>);
+        } catch(NoSuchMethodException e) {
+        } catch(IllegalAccessException e) {
+        } catch(InvocationTargetException e) {
+        }
+        */
+    }
+
+    /**
+     * Method: writePlurals(List<Item> items, BufferedWriter bufferedWriter, Item itemFirst)
+     */
+    @Test
+    public void testWritePlurals() throws Exception {
+        //TODO: Test goes here...
+        /*
+        try {
+           Method method = XlsToXMLDir.getClass().getMethod("writePlurals", List<Item>.class, BufferedWriter.class, Item.class);
+           method.setAccessible(true);
+           method.invoke(<Object>, <Parameters>);
+        } catch(NoSuchMethodException e) {
+        } catch(IllegalAccessException e) {
+        } catch(InvocationTargetException e) {
+        }
+        */
+    }
+
+    /**
+     * Method: writeString(List<Item> items, BufferedWriter bufferedWriter, Item itemFirst)
+     */
+    @Test
+    public void testWriteString() throws Exception {
+        //TODO: Test goes here...
+        /*
+        try {
+           Method method = XlsToXMLDir.getClass().getMethod("writeString", List<Item>.class, BufferedWriter.class, Item.class);
            method.setAccessible(true);
            method.invoke(<Object>, <Parameters>);
         } catch(NoSuchMethodException e) {

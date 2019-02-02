@@ -372,19 +372,20 @@ public class XlsToXMLDir {
         bufferedWriter.newLine();
     }
 
+    /**
+     * 判断Item 集合list中是否都是null,只要集合中有一个item不是null,
+     * 并且其中的属性getStringTranslation()也不是null，空字符串
+     *
+     * @param items
+     * @return
+     */
     public static boolean isItemsAllNull(List<Item> items) {
-        Iterator var2 = items.iterator();
-
-        Item item;
-        do {
-            if (!var2.hasNext()) {
-                return true;
+        for (Item item : items) {
+            if ((item != null) && (item.getStringTranslation() != null) && (item.getStringTranslation().length() > 0)) {
+                return false;
             }
-
-            item = (Item) var2.next();
-        } while (item.getStringTranslation() == null || item.getStringTranslation().length() <= 0);
-
-        return false;
+        }
+        return true;
     }
 }
 
