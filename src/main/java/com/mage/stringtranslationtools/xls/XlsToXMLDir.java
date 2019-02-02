@@ -181,74 +181,77 @@ public class XlsToXMLDir {
     }
 
     private static void writeItemsToXML(List<Item> items, String valuesDir, File fileDirBase) {
-        if (items.size() != 0) {
-            try {
-                String resPath = items.get(0).getPath();
+        if (CollectionUtils.isEmpty(items)) {// 如果 集合list是空就直接返回
+            return;
+        }
 
-                resPath = resPath.replace('/', File.separatorChar);
+        try {
+            String resPath = items.get(0).getPath();
 
-                // 拼接出来一个类似  \ExLightService\res\values 这样的路径
-                String fileDir = resPath + File.separator + "res" + File.separator + valuesDir;
-                File file = new File(fileDirBase, fileDir);
+            resPath = resPath.replace('/', File.separatorChar);
 
-                if (!file.exists()) {
-                    boolean ret = file.mkdirs();
-                }
+            // 拼接出来一个类似  \ExLightService\res\values 这样的路径
+            String fileDir = resPath + File.separator + "res" + File.separator + valuesDir;
+            File file = new File(fileDirBase, fileDir);
 
-                BufferedWriter fw = new BufferedWriter(new FileWriter(new File(file, XML_FILE_NAME)));
-
-                fw.write(XML_DECLARATION);
-                fw.newLine();
-                fw.write(XML_RESOURCES_BEGIN);
-                fw.newLine();
-
-                List<Item> itemsTemp = null;
-                String lastName = null;
-
-                for (Item item : items) {
-                    if (item.getName().startsWith(STRING_PREFIX)) {// S: 开头的是 表示字符串的 要存放到 <string name=""></string> 标签中的
-                        //第一次这个itemsTemp是null,每次都存放一个item，存放好下次循环过来就会调用 writeItemToResources()方法写入文件
-                        writeItemToResources(itemsTemp, fw);
-
-                        itemsTemp = new ArrayList<>();
-                        lastName = item.getName();
-                        itemsTemp.add(item);
-                    } else if (item.getName().startsWith(PLURALS_PREFIX)) {
-                        String itemName = item.getName().substring(0, item.getName().lastIndexOf(":"));
-                        if (itemName.equals(lastName)) { // 也是在itemName 变化的情况下写入文件
-                            lastName = itemName;
-                            itemsTemp.add(item); // itemsTemp 对于 array会存放多个item的
-                        } else {
-                            writeItemToResources(itemsTemp, fw);
-                            itemsTemp = new ArrayList<>();
-                            lastName = itemName;
-                            itemsTemp.add(item);
-                        }
-                    } else if (item.getName().startsWith(ARRAY_PREFIX)) {
-                        String itemName = item.getName().substring(0, item.getName().lastIndexOf(":"));
-                        if (itemName.equals(lastName)) {
-                            lastName = itemName;
-                            itemsTemp.add(item);
-                        } else {
-                            writeItemToResources(itemsTemp, fw);
-                            itemsTemp = new ArrayList<>();
-                            lastName = itemName;
-                            itemsTemp.add(item);
-                        }
-                    }
-
-                }//end while()
-
-                writeItemToResources(itemsTemp, fw);
-                fw.write(XML_RESOURCES_END);
-                fw.newLine();
-                fw.flush();
-                fw.close();
-            } catch (IOException e) {
-                e.printStackTrace();
+            if (!file.exists()) {
+                boolean ret = file.mkdirs();
             }
 
+            BufferedWriter fw = new BufferedWriter(new FileWriter(new File(file, XML_FILE_NAME)));
+
+            fw.write(XML_DECLARATION);
+            fw.newLine();
+            fw.write(XML_RESOURCES_BEGIN);
+            fw.newLine();
+
+            List<Item> itemsTemp = null;
+            String lastName = null;
+
+            for (Item item : items) {
+                if (item.getName().startsWith(STRING_PREFIX)) {// S: 开头的是 表示字符串的 要存放到 <string name=""></string> 标签中的
+                    //第一次这个itemsTemp是null,每次都存放一个item，存放好下次循环过来就会调用 writeItemToResources()方法写入文件
+                    writeItemToResources(itemsTemp, fw);
+
+                    itemsTemp = new ArrayList<>();
+                    lastName = item.getName();
+                    itemsTemp.add(item);
+                } else if (item.getName().startsWith(PLURALS_PREFIX)) {
+                    String itemName = item.getName().substring(0, item.getName().lastIndexOf(":"));
+                    if (itemName.equals(lastName)) { // 也是在itemName 变化的情况下写入文件
+                        lastName = itemName;
+                        itemsTemp.add(item); // itemsTemp 对于 array会存放多个item的
+                    } else {
+                        writeItemToResources(itemsTemp, fw);
+                        itemsTemp = new ArrayList<>();
+                        lastName = itemName;
+                        itemsTemp.add(item);
+                    }
+                } else if (item.getName().startsWith(ARRAY_PREFIX)) {
+                    String itemName = item.getName().substring(0, item.getName().lastIndexOf(":"));
+                    if (itemName.equals(lastName)) {
+                        lastName = itemName;
+                        itemsTemp.add(item);
+                    } else {
+                        writeItemToResources(itemsTemp, fw);
+                        itemsTemp = new ArrayList<>();
+                        lastName = itemName;
+                        itemsTemp.add(item);
+                    }
+                }
+
+            }//end while()
+
+            writeItemToResources(itemsTemp, fw);
+            fw.write(XML_RESOURCES_END);
+            fw.newLine();
+            fw.flush();
+            fw.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
+
+
     }
 
     private static void writeItemToResources(List<Item> items, BufferedWriter bufferedWriter) throws IOException {
