@@ -14,6 +14,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
+import jxl.Sheet;
 import jxl.Workbook;
 import jxl.WorkbookSettings;
 
@@ -148,17 +149,16 @@ public class XlsToXMLDirTest {
      */
     @Test
     public void testExtractXMLFromOneSheet() throws Exception {
-        //TODO: Test goes here...
-        /*
+        Sheet sheet = workbook.getSheet("strings");
+
         try {
-           Method method = XlsToXMLDir.getClass().getMethod("extractXMLFromOneSheet", Sheet.class, File.class);
-           method.setAccessible(true);
-           method.invoke(<Object>, <Parameters>);
-        } catch(NoSuchMethodException e) {
-        } catch(IllegalAccessException e) {
-        } catch(InvocationTargetException e) {
+            Method method = clazz.getDeclaredMethod("extractXMLFromOneSheet", Sheet.class, File.class);
+            method.setAccessible(true);
+            method.invoke(clazz, sheet, xmlFileDir);
+        } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+            e.printStackTrace();
         }
-        */
+
     }
 
     /**
