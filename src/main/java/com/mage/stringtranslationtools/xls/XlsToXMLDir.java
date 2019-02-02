@@ -55,6 +55,11 @@ public class XlsToXMLDir {
     private static final String STRINGS_SHEET_NAME = "strings";
     private static final String VALUES_SHEET_NAME = "values";
 
+    private static final String STRING_PREFIX = "S:";
+    private static final String ARRAY_PREFIX = "A:";
+    private static final String PLURALS_PREFIX = "P:";
+
+
     /**
      * xml文件的 声明行的内容
      */
@@ -201,14 +206,14 @@ public class XlsToXMLDir {
                 String lastName = null;
 
                 for (Item item : items) {
-                    if (item.getName().startsWith("S:")) {// S: 开头的是 表示字符串的 要存放到 <string name=""></string> 标签中的
+                    if (item.getName().startsWith(STRING_PREFIX)) {// S: 开头的是 表示字符串的 要存放到 <string name=""></string> 标签中的
                         //第一次这个itemsTemp是null,每次都存放一个item，存放好下次循环过来就会调用 writeItemToResources()方法写入文件
                         writeItemToResources(itemsTemp, fw);
 
                         itemsTemp = new ArrayList<>();
                         lastName = item.getName();
                         itemsTemp.add(item);
-                    } else if (item.getName().startsWith("P:")) {
+                    } else if (item.getName().startsWith(PLURALS_PREFIX)) {
                         String itemName = item.getName().substring(0, item.getName().lastIndexOf(":"));
                         if (itemName.equals(lastName)) { // 也是在itemName 变化的情况下写入文件
                             lastName = itemName;
@@ -219,7 +224,7 @@ public class XlsToXMLDir {
                             lastName = itemName;
                             itemsTemp.add(item);
                         }
-                    } else if (item.getName().startsWith("A:")) {
+                    } else if (item.getName().startsWith(ARRAY_PREFIX)) {
                         String itemName = item.getName().substring(0, item.getName().lastIndexOf(":"));
                         if (itemName.equals(lastName)) {
                             lastName = itemName;
@@ -250,29 +255,22 @@ public class XlsToXMLDir {
         if (CollectionUtils.isEmpty(items)) {// 如果 集合list是空就直接返回
             return;
         }
-        if (isItemsAllNull(items)) {
+        if (isItemsAllNull(items)) {//items 集合里面的元素都是null
             return;
         }
 
-        Item itemFirst = items.get(0);
-
-        if (itemFirst.getName().startsWith("S:")) {
-            writeString(items, bufferedWriter, itemFirst);
+        String name = items.get(0).getName(); //一般这个不会是null
+        if (name.startsWith(STRING_PREFIX)) {
+            writeString(items, bufferedWriter, name);
+        } else if (name.startsWith(PLURALS_PREFIX)) {
+            writePlurals(items, bufferedWriter, name);
+        } else if (name.startsWith(ARRAY_PREFIX)) {
+            writeArray(items, bufferedWriter, name);
         }
-
-        if (itemFirst.getName().startsWith("P:")) {
-            writePlurals(items, bufferedWriter, itemFirst);
-        }
-
-        if (itemFirst.getName().startsWith("A:")) {
-            writeArray(items, bufferedWriter, itemFirst);
-        }
-
-
     }
 
-    private static void writeArray(List<Item> items, BufferedWriter bufferedWriter, Item itemFirst) throws IOException {
-        String stringName = itemFirst.getName().substring(itemFirst.getName().indexOf(":") + 1, itemFirst.getName().lastIndexOf(":"));
+    private static void writeArray(List<Item> items, BufferedWriter bufferedWriter, String name) throws IOException {
+        String stringName = name.substring(name.indexOf(":") + 1, name.lastIndexOf(":"));
 
         String productName = null;
         if (stringName.contains(":")) {
@@ -305,8 +303,8 @@ public class XlsToXMLDir {
         bufferedWriter.newLine();
     }
 
-    private static void writePlurals(List<Item> items, BufferedWriter bufferedWriter, Item itemFirst) throws IOException {
-        String stringName = itemFirst.getName().substring(itemFirst.getName().indexOf(":") + 1, itemFirst.getName().lastIndexOf(":"));
+    private static void writePlurals(List<Item> items, BufferedWriter bufferedWriter, String name) throws IOException {
+        String stringName = name.substring(name.indexOf(":") + 1, name.lastIndexOf(":"));
 
         String productName = null;
         if (stringName.contains(":")) {
@@ -344,8 +342,8 @@ public class XlsToXMLDir {
         bufferedWriter.newLine();
     }
 
-    private static void writeString(List<Item> items, BufferedWriter bufferedWriter, Item itemFirst) throws IOException {
-        String stringName = itemFirst.getName().substring(itemFirst.getName().indexOf(":") + 1);
+    private static void writeString(List<Item> items, BufferedWriter bufferedWriter, String name) throws IOException {
+        String stringName = name.substring(name.indexOf(":") + 1);
 
         String productName = null;
         if (stringName.contains(":")) {
