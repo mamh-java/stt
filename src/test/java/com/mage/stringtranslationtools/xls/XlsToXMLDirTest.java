@@ -238,17 +238,20 @@ public class XlsToXMLDirTest {
      */
     @Test
     public void testWriteArray() throws Exception {
-        //TODO: Test goes here...
-        /*
-        try {
-           Method method = XlsToXMLDir.getClass().getMethod("writeArray", List<Item>.class, BufferedWriter.class, Item.class);
-           method.setAccessible(true);
-           method.invoke(<Object>, <Parameters>);
-        } catch(NoSuchMethodException e) {
-        } catch(IllegalAccessException e) {
-        } catch(InvocationTargetException e) {
+        List<Item> list = new ArrayList<>();
+        list.add(new Item("A:exlight_settings_array_OTA_3:0", "/OTA", "", "Lighting effect setting"));
+        list.add(new Item("A:exlight_settings_array_OTA_3:1", "/OTA", "", "Lighting effect setting"));
+        list.add(new Item("A:exlight_settings_array_OTA_3:2", "/OTA", "", "Lighting effect setting"));
+
+        String name = list.get(0).getName();
+
+        try (BufferedWriter buffer = new BufferedWriter(new OutputStreamWriter(System.out))) {
+            Method method = clazz.getDeclaredMethod("writeArray", List.class, BufferedWriter.class, String.class);
+            method.setAccessible(true);
+            method.invoke(clazz, list, buffer, name);
+        } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+            e.printStackTrace();
         }
-        */
     }
 
     /**
@@ -256,17 +259,19 @@ public class XlsToXMLDirTest {
      */
     @Test
     public void testWritePlurals() throws Exception {
-        //TODO: Test goes here...
-        /*
-        try {
-           Method method = XlsToXMLDir.getClass().getMethod("writePlurals", List<Item>.class, BufferedWriter.class, Item.class);
-           method.setAccessible(true);
-           method.invoke(<Object>, <Parameters>);
-        } catch(NoSuchMethodException e) {
-        } catch(IllegalAccessException e) {
-        } catch(InvocationTargetException e) {
+        List<Item> list = new ArrayList<>();
+        list.add(new Item("P:exlight_settings_plurals_OTA_3:plurals0", "/OTA", "", "plurals0"));
+        list.add(new Item("P:exlight_settings_plurals_OTA_3:plurals1", "/OTA", "", "plurals 1"));
+        list.add(new Item("P:exlight_settings_plurals_OTA_3:plurals2", "/OTA", "", "plurals2"));
+        String name = list.get(0).getName();
+
+        try (BufferedWriter buffer = new BufferedWriter(new OutputStreamWriter(System.out))) {
+            Method method = clazz.getDeclaredMethod("writePlurals", List.class, BufferedWriter.class, String.class);
+            method.setAccessible(true);
+            method.invoke(clazz, list, buffer, name);
+        } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+            e.printStackTrace();
         }
-        */
     }
 
     /**
@@ -274,17 +279,16 @@ public class XlsToXMLDirTest {
      */
     @Test
     public void testWriteString() throws Exception {
-        //TODO: Test goes here...
-        /*
-        try {
-           Method method = XlsToXMLDir.getClass().getMethod("writeString", List<Item>.class, BufferedWriter.class, Item.class);
-           method.setAccessible(true);
-           method.invoke(<Object>, <Parameters>);
-        } catch(NoSuchMethodException e) {
-        } catch(IllegalAccessException e) {
-        } catch(InvocationTargetException e) {
+        List<Item> list = new ArrayList<>();
+        list.add(new Item("S:exlight_settings_plurals_OTA_3:plurals0", "/OTA", "", "plurals0"));
+        String name = list.get(0).getName();
+        try (BufferedWriter buffer = new BufferedWriter(new OutputStreamWriter(System.out))) {
+            Method method = clazz.getDeclaredMethod("writeString", List.class, BufferedWriter.class, String.class);
+            method.setAccessible(true);
+            method.invoke(clazz, list, buffer, name);
+        } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+            e.printStackTrace();
         }
-        */
     }
 
 }
