@@ -8,7 +8,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.OutputStreamWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -201,17 +203,34 @@ public class XlsToXMLDirTest {
      */
     @Test
     public void testWriteItemToResources() throws Exception {
-        //TODO: Test goes here...
-        /*
-        try {
-           Method method = XlsToXMLDir.getClass().getMethod("writeItemToResources", List<Item>.class, BufferedWriter.class);
-           method.setAccessible(true);
-           method.invoke(<Object>, <Parameters>);
-        } catch(NoSuchMethodException e) {
-        } catch(IllegalAccessException e) {
-        } catch(InvocationTargetException e) {
+        List<Item> list0 = new ArrayList<>();
+        list0.add(new Item("S:productName:exlight_settings_1", "/OTA", "", "Lighting effect setting"));
+
+        List<Item> list1 = new ArrayList<>();
+        list1.add(new Item("S:productName:app_name", "/OTA", "", "OTA"));
+
+        List<Item> list2 = new ArrayList<>();
+        list2.add(new Item("A:exlight_settings_array_OTA_3:0", "/OTA", "", "Lighting effect setting"));
+        list2.add(new Item("A:exlight_settings_array_OTA_3:1", "/OTA", "", "Lighting effect setting"));
+        list2.add(new Item("A:exlight_settings_array_OTA_3:2", "/OTA", "", "Lighting effect setting"));
+
+        List<Item> list3 = new ArrayList<>();
+        list3.add(new Item("P:exlight_settings_plurals_OTA_3:plurals0", "/OTA", "", "plurals0"));
+        list3.add(new Item("P:exlight_settings_plurals_OTA_3:plurals1", "/OTA", "", "plurals 1"));
+        list3.add(new Item("P:exlight_settings_plurals_OTA_3:plurals2", "/OTA", "", "plurals2"));
+
+        //打印到屏幕输出上
+        try (BufferedWriter buffer = new BufferedWriter(new OutputStreamWriter(System.err))) {
+            Method method = clazz.getDeclaredMethod("writeItemToResources", List.class, BufferedWriter.class);
+            method.setAccessible(true);
+            method.invoke(clazz, list0, buffer);
+            method.invoke(clazz, list2, buffer);
+            method.invoke(clazz, list1, buffer);
+            method.invoke(clazz, list3, buffer);
+        } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+            e.printStackTrace();
         }
-        */
+
     }
 
     /**
