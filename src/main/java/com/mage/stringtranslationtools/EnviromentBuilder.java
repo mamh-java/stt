@@ -44,11 +44,7 @@ public class EnviromentBuilder {
 
     static {
         FILEPATH_RES = File.separator + "res" + File.separator + "values";
-        mStringXMLFileFilter = new FilenameFilter() {
-            public boolean accept(File dir, String filename) {
-                return filename.endsWith(".xml");
-            }
-        };
+        mStringXMLFileFilter = (dir, filename) -> filename.endsWith(".xml");
     }
 
     public EnviromentBuilder() {
@@ -82,16 +78,14 @@ public class EnviromentBuilder {
     }
 
     public static Map<String, String> readStringValueFromDir(String dirPath, List<String> keys) {
-        Utils.logout("readStringValueFromDir:" + dirPath);
         File[] files = (new File(dirPath)).listFiles(mStringXMLFileFilter);
-        Map<String, String> xmlContentMap = new HashMap();
-        Dom4jParser parser = new Dom4jParser();
-        if (files != null) {
-            File[] var9 = files;
-            int var8 = files.length;
 
-            for (int var7 = 0; var7 < var8; ++var7) {
-                File file = var9[var7];
+        Map<String, String> xmlContentMap = new HashMap<>();
+
+        Dom4jParser parser = new Dom4jParser();
+
+        if (files != null) {
+            for (File file : files) {
                 Map<String, String> temp = parser.parseValidStringNames(file, keys);
                 xmlContentMap.putAll(temp);
             }
@@ -101,7 +95,7 @@ public class EnviromentBuilder {
     }
 
     public static Set<String> scanResDirPathList(String configFileName) {
-        HashSet set = new HashSet();
+        HashSet<String> set = new HashSet<>();
 
         try {
             FileInputStream f = new FileInputStream(new File(configFileName));
@@ -111,27 +105,29 @@ public class EnviromentBuilder {
             try {
                 while ((file = fileReader.readLine()) != null) {
                     file = file.replace("/", File.separator);
-                    if (file.indexOf(FILEPATH_RES) != -1) {
+
+                    if (file.contains(FILEPATH_RES)) {
                         file = file.substring(1, file.indexOf(FILEPATH_RES));
-                    } else if (file.indexOf(File.separator + "res1" + File.separator + "values") != -1) {
+                    } else if (file.contains(File.separator + "res1" + File.separator + "values")) {
                         file = file.substring(1, file.indexOf(File.separator + "res1" + File.separator + "values"));
                     }
 
                     Utils.logout("scanResDirPathList:" + file);
+
                     set.add(file);
                 }
-            } catch (IOException var6) {
-                var6.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-        } catch (FileNotFoundException var7) {
-            var7.printStackTrace();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
         }
 
         return set;
     }
 
     public static Map<String, Boolean> scanFilterItems(String configFileName) {
-        HashMap map = new HashMap();
+        Map<String, Boolean> map = new HashMap<>();
 
         try {
             FileInputStream f = new FileInputStream(new File(configFileName));
@@ -143,18 +139,18 @@ public class EnviromentBuilder {
                     Utils.logout("scanFilterItems:" + file);
                     map.put(file, true);
                 }
-            } catch (IOException var6) {
-                var6.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-        } catch (FileNotFoundException var7) {
-            var7.printStackTrace();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
         }
 
         return map;
     }
 
     public static List<String> scanValuesList(String fileName) {
-        ArrayList set = new ArrayList();
+        List<String> set = new ArrayList<>();
 
         try {
             FileInputStream f = new FileInputStream(new File(fileName));
@@ -165,11 +161,11 @@ public class EnviromentBuilder {
                 while ((file = fileReader.readLine()) != null) {
                     set.add(file);
                 }
-            } catch (IOException var6) {
-                var6.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-        } catch (FileNotFoundException var7) {
-            var7.printStackTrace();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
         }
 
         return set;
@@ -197,7 +193,7 @@ public class EnviromentBuilder {
                 try {
                     Float.parseFloat(value);
                     return false;
-                } catch (Exception var3) {
+                } catch (Exception e) {
                     return true;
                 }
             }
@@ -207,24 +203,19 @@ public class EnviromentBuilder {
     }
 
     public static boolean isValidKey(String key, Map<String, Boolean> filterMap) {
-        if (filterMap.get(key) != null && (Boolean) filterMap.get(key)) {
-            Utils.logout("isValidKey = false : " + key);
-            return false;
-        } else {
-            return true;
-        }
+        return filterMap.get(key) == null || !filterMap.get(key);
     }
 
     public static boolean isNotTranslated(String key, List<String> valuesSet, Map<String, Map<String, String>> valuesResourceMap) {
-        Iterator var4 = valuesSet.iterator();
+        Iterator iterator = valuesSet.iterator();
 
         String temp;
         do {
-            if (!var4.hasNext()) {
+            if (!iterator.hasNext()) {
                 return false;
             }
 
-            String str = (String) var4.next();
+            String str = (String) iterator.next();
             temp = null;
             if (valuesResourceMap.get(str) != null && ((Map) valuesResourceMap.get(str)).get(key) != null) {
                 temp = (String) ((Map) valuesResourceMap.get(str)).get(key);
@@ -235,7 +226,7 @@ public class EnviromentBuilder {
             }
 
             if (temp.startsWith("\"")) {
-                temp = temp.substring(1, temp.length());
+                temp = temp.substring(1);
             }
 
             if (temp.endsWith("\"")) {
@@ -246,59 +237,53 @@ public class EnviromentBuilder {
         return true;
     }
 
-    public static boolean isArrayNotTranslated(List<String> tempStringNames, Map<String, String> valuesResource, String resDir, Map<String, Boolean> filterMap, List<String> valuesSet, Map<String, Map<String, String>> valuesResourceMap) {
-        Iterator var7 = tempStringNames.iterator();
+    public static boolean isArrayNotTranslated(List<String> tempStringNames,
+                                               Map<String, String> valuesResource,
+                                               String resDir,
+                                               Map<String, Boolean> filterMap,
+                                               List<String> valuesSet,
+                                               Map<String, Map<String, String>> valuesResourceMap) {
+        for (String tempKey : tempStringNames) {
+            String tempvalue =  valuesResource.get(tempKey);
 
-        String tempKey;
-        String tempvalue;
-        do {
-            if (!var7.hasNext()) {
-                return false;
-            }
-
-            tempKey = (String) var7.next();
-            tempvalue = (String) valuesResource.get(tempKey);
             if (tempvalue.startsWith("\"")) {
-                tempvalue = tempvalue.substring(1, tempvalue.length());
+                tempvalue = tempvalue.substring(1);
             }
-
             if (tempvalue.endsWith("\"")) {
                 tempvalue = tempvalue.substring(0, tempvalue.length() - 1);
             }
-        }
-        while (!isValidString("", tempvalue) || !isValidKey(tempKey + "==" + resDir, filterMap) || !isNotTranslated(tempKey, valuesSet, valuesResourceMap));
 
-        return true;
+            if ((isValidString("", tempvalue)) &&
+                    (isValidKey(tempKey + "==" + resDir, filterMap)) &&
+                    (isNotTranslated(tempKey, valuesSet, valuesResourceMap))
+            ) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static Map<String, String> getNotTranslatedMap(String key, List<String> valuesSet, Map<String, Map<String, String>> valuesResourceMap) {
-        Map<String, String> map = new HashMap();
-        Iterator var5 = valuesSet.iterator();
-
-        while (var5.hasNext()) {
-            String str = (String) var5.next();
+        Map<String, String> map = new HashMap<>();
+        for (String str : valuesSet) {
             String temp = null;
-            if (valuesResourceMap.get(str) != null && ((Map) valuesResourceMap.get(str)).get(key) != null) {
+            if ((valuesResourceMap.get(str) != null) && (((Map) valuesResourceMap.get(str)).get(key) != null)) {
                 temp = (String) ((Map) valuesResourceMap.get(str)).get(key);
             }
-
             if (temp == null) {
                 map.put(str, null);
             } else {
                 if (temp.startsWith("\"")) {
                     temp = temp.substring(1, temp.length());
                 }
-
                 if (temp.endsWith("\"")) {
                     temp = temp.substring(0, temp.length() - 1);
                 }
-
                 if (temp.isEmpty()) {
                     map.put(str, null);
                 }
             }
         }
-
         return map;
     }
 

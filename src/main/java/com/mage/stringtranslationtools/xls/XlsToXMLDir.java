@@ -139,15 +139,14 @@ public class XlsToXMLDir {
 
         List<String> valuesSet = new ArrayList<>();//存放语言种类
 
-        int columnCount;
-        for (columnCount = 3; columnCount < column; ++columnCount) {
-            String valuesDir = sheet.getCell(columnCount, 0).getContents();
+        for (int i = 3; i < column; ++i) {
+            String valuesDir = sheet.getCell(i, 0).getContents();
             if (valuesDir != null && valuesDir.length() != 0) {
-                valuesSet.add(sheet.getCell(columnCount, 0).getContents());//第1行，从第4列开始
+                valuesSet.add(sheet.getCell(i, 0).getContents());//第1行，从第4列开始
             }
         }
 
-        columnCount = 3;
+        int columnCount = 3;
         for (Iterator iterator = valuesSet.iterator(); iterator.hasNext(); ++columnCount) {
             String valuesDir = (String) iterator.next();
 
@@ -160,12 +159,8 @@ public class XlsToXMLDir {
 
                 if (name != null && name.length() != 0) {
                     String path = sheet.getCell(1, i).getContents();// 第2列，i行单元格的内容，第2列表示 APP Path
-
                     String stringBase = sheet.getCell(2, i).getContents();//第3列，表示备注啊
-
                     String stringTranslation = sheet.getCell(columnCount, i).getContents();//从第4列开始是values各个语言对应的字符串值
-
-
                     if (path.equals(pastPath)) {// 如果当前path等于之前的那个path，也就是当前行app path等于上一行的，说明还是在一个app里面的，
                     } else {// 到了这里不相等了，说明换另外一个app了
                         writeItemsToXML(items, valuesDir, xmlFileDir);//不相等了说明一个app的一个语言的解析完毕，可以写入xml文件了
@@ -176,7 +171,9 @@ public class XlsToXMLDir {
                     items.add(new Item(name, path, stringBase, stringTranslation));
                 }
             }
+
             writeItemsToXML(items, valuesDir, xmlFileDir);
+
             items = new ArrayList<>();
         }
 
@@ -242,7 +239,7 @@ public class XlsToXMLDir {
                     }
                 }
 
-            }//end while()
+            }//end for (Item item : items)
 
             writeItemToResources(itemsTemp, fw);
             fw.write(XML_RESOURCES_END);
@@ -274,7 +271,7 @@ public class XlsToXMLDir {
         }
     }
 
-    private static void writeArray(List<Item> items, BufferedWriter bufferedWriter, String name) throws IOException {
+    private static void writeArray(List<Item> items, BufferedWriter buffer, String name) throws IOException {
         String stringName = name.substring(name.indexOf(":") + 1, name.lastIndexOf(":"));
 
         String productName = null;
@@ -284,31 +281,31 @@ public class XlsToXMLDir {
             stringName = strs[1];
         }
 
-        bufferedWriter.write("    ");
-        bufferedWriter.write("<string-array name=\"");
-        bufferedWriter.write(stringName);
+        buffer.write("    ");
+        buffer.write("<string-array name=\"");
+        buffer.write(stringName);
         if (productName != null) {
-            bufferedWriter.write("\" product=\"");
-            bufferedWriter.write(productName);
+            buffer.write("\" product=\"");
+            buffer.write(productName);
         }
 
-        bufferedWriter.write("\">");
-        bufferedWriter.newLine();
+        buffer.write("\">");
+        buffer.newLine();
 
         for (Item item : items) {
-            bufferedWriter.write("        ");
-            bufferedWriter.write("<item>");
-            bufferedWriter.write("\"" + item.getStringTranslation() + "\"");
-            bufferedWriter.write("</item>");
-            bufferedWriter.newLine();
+            buffer.write("        ");
+            buffer.write("<item>");
+            buffer.write("\"" + item.getStringTranslation() + "\"");
+            buffer.write("</item>");
+            buffer.newLine();
         }
 
-        bufferedWriter.write("    ");
-        bufferedWriter.write("</string-array>");
-        bufferedWriter.newLine();
+        buffer.write("    ");
+        buffer.write("</string-array>");
+        buffer.newLine();
     }
 
-    private static void writePlurals(List<Item> items, BufferedWriter bufferedWriter, String name) throws IOException {
+    private static void writePlurals(List<Item> items, BufferedWriter buffer, String name) throws IOException {
         String stringName = name.substring(name.indexOf(":") + 1, name.lastIndexOf(":"));
 
         String productName = null;
@@ -318,36 +315,36 @@ public class XlsToXMLDir {
             stringName = strs[1];
         }
 
-        bufferedWriter.write("    ");
-        bufferedWriter.write("<plurals name=\"");
-        bufferedWriter.write(stringName);
+        buffer.write("    ");
+        buffer.write("<plurals name=\"");
+        buffer.write(stringName);
 
         if (productName != null) {
-            bufferedWriter.write("\" product=\"");
-            bufferedWriter.write(productName);
+            buffer.write("\" product=\"");
+            buffer.write(productName);
         }
 
-        bufferedWriter.write("\">");
-        bufferedWriter.newLine();
+        buffer.write("\">");
+        buffer.newLine();
 
         for (Item item : items) {
             String itemName = item.getName();
             String pluralsQuantity = itemName.substring(itemName.lastIndexOf(":") + 1);
-            bufferedWriter.write("        ");
-            bufferedWriter.write("<item quantity=\"");
-            bufferedWriter.write(pluralsQuantity);
-            bufferedWriter.write("\">");
-            bufferedWriter.write("\"" + item.getStringTranslation() + "\"");
-            bufferedWriter.write("</item>");
-            bufferedWriter.newLine();
+            buffer.write("        ");
+            buffer.write("<item quantity=\"");
+            buffer.write(pluralsQuantity);
+            buffer.write("\">");
+            buffer.write("\"" + item.getStringTranslation() + "\"");
+            buffer.write("</item>");
+            buffer.newLine();
         }
 
-        bufferedWriter.write("    ");
-        bufferedWriter.write("</plurals>");
-        bufferedWriter.newLine();
+        buffer.write("    ");
+        buffer.write("</plurals>");
+        buffer.newLine();
     }
 
-    private static void writeString(List<Item> items, BufferedWriter bufferedWriter, String name) throws IOException {
+    private static void writeString(List<Item> items, BufferedWriter buffer, String name) throws IOException {
         String stringName = name.substring(name.indexOf(":") + 1);
 
         String productName = null;
@@ -357,22 +354,22 @@ public class XlsToXMLDir {
             stringName = strs[1];
         }
 
-        bufferedWriter.write("    ");
-        bufferedWriter.write("<string name=\"");
-        bufferedWriter.write(stringName);
+        buffer.write("    ");
+        buffer.write("<string name=\"");
+        buffer.write(stringName);
 
         if (productName != null) {
-            bufferedWriter.write("\" product=\"");
-            bufferedWriter.write(productName);
+            buffer.write("\" product=\"");
+            buffer.write(productName);
         }
-        bufferedWriter.write("\">");
+        buffer.write("\">");
 
         for (Item item : items) { // 这个items 列表只会有一个元素的，这里也使用个循环，和其他2个方法类似
-            bufferedWriter.write("\"" + item.getStringTranslation() + "\""); //插入 到 <string></string> 标签之间的值
+            buffer.write("\"" + item.getStringTranslation() + "\""); //插入 到 <string></string> 标签之间的值
         }
 
-        bufferedWriter.write("</string>");
-        bufferedWriter.newLine();
+        buffer.write("</string>");
+        buffer.newLine();
     }
 
     /**

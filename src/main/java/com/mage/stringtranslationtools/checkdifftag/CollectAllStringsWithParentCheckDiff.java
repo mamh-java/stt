@@ -61,22 +61,18 @@ public class CollectAllStringsWithParentCheckDiff {
             sheet.addCell(label);
             Label pLabel = new Label(1, 0, "App Path");
             sheet.addCell(pLabel);
-            int count = 2;
 
-            String resDir;
-            Iterator var14;
-            for (var14 = valuesSet.iterator(); var14.hasNext(); ++count) {
-                resDir = (String) var14.next();
+            int count = 2;
+            for (Iterator iterator = valuesSet.iterator(); iterator.hasNext(); ++count) {
+                String resDir = (String) iterator.next();
                 Label contentLabel = new Label(count, 0, resDir);
                 sheet.addCell(contentLabel);
             }
 
             workbook.write();
             workbook.close();
-            var14 = resDirPathSet.iterator();
 
-            while (var14.hasNext()) {
-                resDir = (String) var14.next();
+            for (String resDir : resDirPathSet) {
                 workbook = Workbook.createWorkbook(xmlFile, Workbook.getWorkbook(xmlFile));
                 sheet = workbook.getSheet(0);
                 collectAllString(filePath, resDir, valuesSet, sheet);
@@ -91,115 +87,91 @@ public class CollectAllStringsWithParentCheckDiff {
     }
 
     public static void collectAllString(String filePath, String resDir, List<String> valuesSet, WritableSheet sheet) {
-        List<String> keys = new ArrayList();
-        Map<String, String> valuesResource = EnviromentBuilder.readStringValueFromDir(filePath + resDir + File.separator + "res" + File.separator + (String) valuesSet.get(0), keys);
-        Map<String, Map<String, String>> valuesResourceMap = new HashMap();
+        List<String> keys = new ArrayList<>();
+        Map<String, String> valuesResource = EnviromentBuilder.readStringValueFromDir(filePath + resDir + File.separator + "res" + File.separator + valuesSet.get(0), keys);
+        Map<String, Map<String, String>> valuesResourceMap = new HashMap<>();
         valuesSet = valuesSet.subList(1, valuesSet.size());
-        Iterator var8 = valuesSet.iterator();
 
-        while (var8.hasNext()) {
-            String key = (String) var8.next();
-            Map<String, String> valuesResourceTemp = new HashMap();
+        for (String key : valuesSet) {
+            Map<String, String> valuesResourceTemp = new HashMap<>();
             int index = key.indexOf("-");
-
             while (index != -1) {
                 index = key.indexOf("-", index + 1);
                 if (index == -1) {
                     break;
                 }
-
                 String temp = key.substring(0, index);
-                valuesResourceTemp.putAll(EnviromentBuilder.readStringValueFromDir(filePath + resDir + File.separator + "res" + File.separator + temp, (List) null));
+                valuesResourceTemp.putAll(EnviromentBuilder.readStringValueFromDir(filePath + resDir + File.separator + "res" + File.separator + temp, null));
             }
 
-            valuesResourceTemp.putAll(EnviromentBuilder.readStringValueFromDir(filePath + resDir + File.separator + "res" + File.separator + key, (List) null));
+            valuesResourceTemp.putAll(EnviromentBuilder.readStringValueFromDir(filePath + resDir + File.separator + "res" + File.separator + key, null));
             valuesResourceMap.put(key, valuesResourceTemp);
         }
 
         try {
             int count = sheet.getRows();
-            Iterator var27 = keys.iterator();
+            for (String key : keys) {
+                if ((valuesResource.get(key)).contains("<xliff:g")) {
+                    int xliffCount = 0;
+                    String string = valuesResource.get(key);
+                    int index = string.indexOf("<xliff:g");
+                    while (index >= 0) {
+                        xliffCount++;
+                        index = string.indexOf("<xliff:g", string.indexOf("</xliff:g>", index) + "</xliff:g>".length());
+                    }
+                    if (!isAllDiffTranslated(valuesSet, valuesResourceMap, key, xliffCount)) {
+                        Label labelKey = new Label(0, count, key);
+                        Label labelPath = new Label(1, count, resDir);
+                        Label labelValue = new Label(2, count, valuesResource.get(key));
+                        sheet.addCell(labelKey);
+                        sheet.addCell(labelPath);
+                        sheet.addCell(labelValue);
 
-            while (true) {
-                String key;
-                int xliffCount;
-                do {
-                    do {
-                        if (!var27.hasNext()) {
-                            return;
+                        int verCount = 2;
+                        for (String str : valuesSet) {
+                            verCount++;
+                            String temp = "";
+                            if ((valuesResourceMap.get(str) != null) && (((Map) valuesResourceMap.get(str)).get(key) != null)) {
+                                temp = (String) ((Map) valuesResourceMap.get(str)).get(key);
+                            }
+                            int xliffCountLogic = 0;
+                            String stringLogic = temp;
+                            int indexLogic = stringLogic.indexOf("<xliff:g");
+                            while (indexLogic >= 0) {
+                                xliffCountLogic++;
+                                indexLogic = stringLogic.indexOf("<xliff:g", stringLogic.indexOf("</xliff:g>", indexLogic) + "</xliff:g>".length());
+                            }
+                            if (xliffCount != xliffCountLogic) {
+                                Label contentLabel = new Label(verCount, count, temp);
+                                sheet.addCell(contentLabel);
+                            }
                         }
-
-                        key = (String) var27.next();
-                    } while (((String) valuesResource.get(key)).indexOf("<xliff:g") == -1);
-
-                    xliffCount = 0;
-                    String string = (String) valuesResource.get(key);
-
-                    for (int index = string.indexOf("<xliff:g"); index >= 0; index = string.indexOf("<xliff:g", string.indexOf("</xliff:g>", index) + "</xliff:g>".length())) {
-                        ++xliffCount;
-                    }
-                } while (isAllDiffTranslated(valuesSet, valuesResourceMap, key, xliffCount));
-
-                Label labelKey = new Label(0, count, key);
-                Label labelPath = new Label(1, count, resDir);
-                Label labelValue = new Label(2, count, (String) valuesResource.get(key));
-                sheet.addCell(labelKey);
-                sheet.addCell(labelPath);
-                sheet.addCell(labelValue);
-                int verCount = 2;
-                Iterator var18 = valuesSet.iterator();
-
-                while (var18.hasNext()) {
-                    String str = (String) var18.next();
-                    ++verCount;
-                    String temp = "";
-                    if (valuesResourceMap.get(str) != null && ((Map) valuesResourceMap.get(str)).get(key) != null) {
-                        temp = (String) ((Map) valuesResourceMap.get(str)).get(key);
-                    }
-
-                    int xliffCountLogic = 0;
-                    String stringLogic = temp;
-
-                    for (int indexLogic = temp.indexOf("<xliff:g"); indexLogic >= 0; indexLogic = stringLogic.indexOf("<xliff:g", stringLogic.indexOf("</xliff:g>", indexLogic) + "</xliff:g>".length())) {
-                        ++xliffCountLogic;
-                    }
-
-                    if (xliffCount != xliffCountLogic) {
-                        Label contentLabel = new Label(verCount, count, temp);
-                        sheet.addCell(contentLabel);
+                        count++;
                     }
                 }
-
-                ++count;
             }
-        } catch (Exception var24) {
-            var24.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
     public static boolean isAllDiffTranslated(List<String> valuesSet, Map<String, Map<String, String>> valuesResourceMap, String key, int xliffCount) {
-        Iterator var5 = valuesSet.iterator();
-
-        int xliffCountLogic;
-        do {
-            if (!var5.hasNext()) {
-                return true;
-            }
-
-            String str = (String) var5.next();
+        for (String str : valuesSet) {
             String temp = "";
-            if (valuesResourceMap.get(str) != null && ((Map) valuesResourceMap.get(str)).get(key) != null) {
+            if ((valuesResourceMap.get(str) != null) && (((Map) valuesResourceMap.get(str)).get(key) != null)) {
                 temp = (String) ((Map) valuesResourceMap.get(str)).get(key);
             }
-
-            xliffCountLogic = 0;
+            int xliffCountLogic = 0;
             String stringLogic = temp;
-
-            for (int indexLogic = temp.indexOf("<xliff:g"); indexLogic >= 0; indexLogic = stringLogic.indexOf("<xliff:g", stringLogic.indexOf("</xliff:g>", indexLogic) + "</xliff:g>".length())) {
-                ++xliffCountLogic;
+            int indexLogic = stringLogic.indexOf("<xliff:g");
+            while (indexLogic >= 0) {
+                xliffCountLogic++;
+                indexLogic = stringLogic.indexOf("<xliff:g", stringLogic.indexOf("</xliff:g>", indexLogic) + "</xliff:g>".length());
             }
-        } while (xliffCount == xliffCountLogic);
-
-        return false;
+            if (xliffCount != xliffCountLogic) {
+                return false;
+            }
+        }
+        return true;
     }
 }

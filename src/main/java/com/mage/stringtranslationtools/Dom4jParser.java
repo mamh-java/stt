@@ -71,145 +71,146 @@ public class Dom4jParser implements Parser {
     }
 
     public Map<String, String> parseValidStringNames(File strFile, List<String> keys) {
-        HashMap xmlContentMap = new HashMap();
+        Map<String, String> xmlContentMap = new HashMap<>();
 
         Document document;
         FileWriter fw;
         PrintWriter pw;
+
         try {
             document = this.reader.read(strFile);
-        } catch (DocumentException var17) {
+        } catch (DocumentException e) {
             try {
                 fw = new FileWriter("parseFailedXML.txt", true);
                 pw = new PrintWriter(fw);
                 pw.println(strFile.getAbsolutePath());
                 pw.close();
                 fw.close();
-            } catch (IOException var16) {
-                var16.printStackTrace();
+            } catch (IOException e1) {
+                e1.printStackTrace();
             }
 
-            var17.printStackTrace();
+            e.printStackTrace();
             return xmlContentMap;
         }
 
         Element root = document.getRootElement();
-        fw = null;
-        pw = null;
-        Attribute attribute = null;
-        String strName = null;
-        Iterator i = root.elementIterator("string");
 
-        while (true) {
-            String elementAsXML;
-            Attribute productAttribute;
-            String productName;
-            Element element;
-            while (i.hasNext()) {
-                element = (Element) i.next();
-                elementAsXML = this.stripElementName(element.asXML());
-                attribute = element.attribute("translatable");
-                if (attribute != null && !Boolean.getBoolean(attribute.getValue())) {
+        for (Iterator i = root.elementIterator("string"); i.hasNext(); ) {
+            Element element = (Element) i.next();
+            String elementAsXML = stripElementName(element.asXML());
+
+            Attribute attribute = element.attribute("translatable");
+
+            if ((attribute != null) && (!Boolean.getBoolean(attribute.getValue()))) {
+                Utils.logout("string name:" + element.attribute("name").getText() + " -- ignored");
+            } else {
+                attribute = element.attribute("translate");
+
+                if ((attribute != null) && (!Boolean.getBoolean(attribute.getValue()))) {
                     Utils.logout("string name:" + element.attribute("name").getText() + " -- ignored");
-                } else {
-                    attribute = element.attribute("translate");
-                    if (attribute != null && !Boolean.getBoolean(attribute.getValue())) {
-                        Utils.logout("string name:" + element.attribute("name").getText() + " -- ignored");
-                    } else if (element.nodeCount() != 0 && (element.nodeCount() != 1 || elementAsXML == null || elementAsXML.length() != 0)) {
-                        productAttribute = element.attribute("product");
-                        productName = null;
-                        if (productAttribute != null && StringUtils.isNotEmpty(productAttribute.getValue())) {
+                } else if (element.nodeCount() != 0) {
+                    if ((element.nodeCount() != 1) || (elementAsXML == null) || (elementAsXML.length() != 0)) {
+
+                        Attribute productAttribute = element.attribute("product");
+
+                        String productName = null;
+
+                        if ((productAttribute != null) && (StringUtils.isNotEmpty(productAttribute.getValue()))) {
                             productName = productAttribute.getValue();
                         }
 
                         attribute = element.attribute("name");
-                        if (attribute != null && StringUtils.isNotEmpty(strName = attribute.getValue()) && EnviromentBuilder.isValidString("S:" + (productName != null ? productName + ":" : "") + strName, this.stripElementName(element.asXML()))) {
-                            xmlContentMap.put("S:" + (productName != null ? productName + ":" : "") + strName, elementAsXML);
-                            if (keys != null) {
-                                keys.add("S:" + (productName != null ? productName + ":" : "") + strName);
-                            }
-                        }
-                    }
-                }
-            }
-
-            i = root.elementIterator("plurals");
-
-            while (true) {
-                Element elementItem;
-                while (i.hasNext()) {
-                    element = (Element) i.next();
-                    elementAsXML = this.stripElementName(element.asXML());
-                    attribute = element.attribute("translatable");
-                    if (attribute != null && !Boolean.getBoolean(attribute.getValue())) {
-                        Utils.logout("string name:" + element.attribute("name").getText() + " -- ignored");
-                    } else {
-                        attribute = element.attribute("translate");
-                        if (attribute != null && !Boolean.getBoolean(attribute.getValue())) {
-                            Utils.logout("string name:" + element.attribute("name").getText() + " -- ignored");
-                        } else if (element.nodeCount() != 0 && (element.nodeCount() != 1 || elementAsXML == null || elementAsXML.length() != 0)) {
-                            productAttribute = element.attribute("product");
-                            productName = null;
-                            if (productAttribute != null && StringUtils.isNotEmpty(productAttribute.getValue())) {
-                                productName = productAttribute.getValue();
-                            }
-
-                            attribute = element.attribute("name");
-                            if (attribute != null && StringUtils.isNotEmpty(strName = attribute.getValue())) {
-                                Iterator itemIte = element.elementIterator("item");
-
-                                while (itemIte.hasNext()) {
-                                    elementItem = (Element) itemIte.next();
-                                    xmlContentMap.put("P:" + (productName != null ? productName + ":" : "") + strName + ":" + elementItem.attribute("quantity").getText(), this.stripElementName(elementItem.asXML()));
-                                    if (keys != null) {
-                                        keys.add("P:" + (productName != null ? productName + ":" : "") + strName + ":" + elementItem.attribute("quantity").getText());
-                                    }
+                        String strName;
+                        if ((attribute != null) && (StringUtils.isNotEmpty(strName = attribute.getValue()))) {
+                            if (EnviromentBuilder.isValidString("S:" + (productName != null ? productName + ":" : "") + strName, stripElementName(element.asXML()))) {
+                                xmlContentMap.put("S:" + (productName != null ? productName + ":" : "") + strName, elementAsXML);
+                                if (keys != null) {
+                                    keys.add("S:" + (productName != null ? productName + ":" : "") + strName);
                                 }
                             }
                         }
                     }
-                }
-
-                i = root.elementIterator("string-array");
-
-                while (true) {
-                    while (i.hasNext()) {
-                        element = (Element) i.next();
-                        elementAsXML = this.stripElementName(element.asXML());
-                        attribute = element.attribute("translatable");
-                        if (attribute != null && !Boolean.getBoolean(attribute.getValue())) {
-                            Utils.logout("string name:" + element.attribute("name").getText() + " -- ignored");
-                        } else {
-                            attribute = element.attribute("translate");
-                            if (attribute != null && !Boolean.getBoolean(attribute.getValue())) {
-                                Utils.logout("string name:" + element.attribute("name").getText() + " -- ignored");
-                            } else if (element.nodeCount() != 0 && (element.nodeCount() != 1 || elementAsXML == null || elementAsXML.length() != 0)) {
-                                productAttribute = element.attribute("product");
-                                productName = null;
-                                if (productAttribute != null && StringUtils.isNotEmpty(productAttribute.getValue())) {
-                                    productName = productAttribute.getValue();
-                                }
-
-                                attribute = element.attribute("name");
-                                if (attribute != null && StringUtils.isNotEmpty(strName = attribute.getValue())) {
-                                    int itemElementIndex = 0;
-
-                                    for (Iterator itemIte = element.elementIterator("item"); itemIte.hasNext(); ++itemElementIndex) {
-                                        elementItem = (Element) itemIte.next();
-                                        xmlContentMap.put("A:" + (productName != null ? productName + ":" : "") + strName + ":" + itemElementIndex, this.stripElementName(elementItem.asXML()));
-                                        if (keys != null) {
-                                            keys.add("A:" + (productName != null ? productName + ":" : "") + strName + ":" + itemElementIndex);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    return xmlContentMap;
                 }
             }
         }
+
+        for (Iterator i = root.elementIterator("plurals"); i.hasNext(); ) {
+            Element element = (Element) i.next();
+            String elementAsXML = stripElementName(element.asXML());
+
+            Attribute attribute = element.attribute("translatable");
+            if ((attribute != null) && (!Boolean.getBoolean(attribute.getValue()))) {
+                Utils.logout("string name:" + element.attribute("name").getText() + " -- ignored");
+            } else {
+                attribute = element.attribute("translate");
+
+                if ((attribute != null) && (!Boolean.getBoolean(attribute.getValue()))) {
+                    Utils.logout("string name:" + element.attribute("name").getText() + " -- ignored");
+                } else if (element.nodeCount() != 0) {
+                    if ((element.nodeCount() != 1) || (elementAsXML == null) || (elementAsXML.length() != 0)) {
+
+                        Attribute productAttribute = element.attribute("product");
+                        String productName = null;
+                        if ((productAttribute != null) && (StringUtils.isNotEmpty(productAttribute.getValue()))) {
+                            productName = productAttribute.getValue();
+                        }
+                        attribute = element.attribute("name");
+                        String strName;
+
+                        if ((attribute != null) && (StringUtils.isNotEmpty(strName = attribute.getValue()))) {
+                            for (Iterator itemIte = element.elementIterator("item"); itemIte.hasNext(); ) {
+                                Element elementItem = (Element) itemIte.next();
+                                xmlContentMap.put("P:" + (productName != null ? productName + ":" : "") + strName +
+                                        ":" + elementItem.attribute("quantity").getText(), stripElementName(elementItem.asXML()));
+                                if (keys != null) {
+                                    keys.add("P:" + (productName != null ? productName + ":" : "") + strName + ":" + elementItem.attribute("quantity").getText());
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        for (Iterator i = root.elementIterator("string-array"); i.hasNext(); ) {
+            Element element = (Element) i.next();
+            String elementAsXML = stripElementName(element.asXML());
+
+            Attribute attribute = element.attribute("translatable");
+            if ((attribute != null) && (!Boolean.getBoolean(attribute.getValue()))) {
+                Utils.logout("string name:" + element.attribute("name").getText() + " -- ignored");
+            } else {
+                attribute = element.attribute("translate");
+                if ((attribute != null) && (!Boolean.getBoolean(attribute.getValue()))) {
+                    Utils.logout("string name:" + element.attribute("name").getText() + " -- ignored");
+                } else if (element.nodeCount() != 0) {
+                    if ((element.nodeCount() != 1) || (elementAsXML == null) || (elementAsXML.length() != 0)) {
+                        Attribute productAttribute = element.attribute("product");
+                        String productName = null;
+                        if ((productAttribute != null) && (StringUtils.isNotEmpty(productAttribute.getValue()))) {
+                            productName = productAttribute.getValue();
+                        }
+                        attribute = element.attribute("name");
+                        String strName;
+
+                        if ((attribute != null) && (StringUtils.isNotEmpty(strName = attribute.getValue()))) {
+                            int itemElementIndex = 0;
+                            for (Iterator itemIte = element.elementIterator("item"); itemIte.hasNext(); ) {
+                                Element elementItem = (Element) itemIte.next();
+                                xmlContentMap.put("A:" + (productName != null ? productName + ":" : "") + strName + ":" + itemElementIndex, stripElementName(elementItem.asXML()));
+                                if (keys != null) {
+                                    keys.add("A:" + (productName != null ? productName + ":" : "") + strName + ":" + itemElementIndex);
+                                }
+                                itemElementIndex++;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return xmlContentMap;
     }
 }
 

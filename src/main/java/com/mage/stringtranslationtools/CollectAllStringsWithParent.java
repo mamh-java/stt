@@ -44,6 +44,7 @@ public class CollectAllStringsWithParent {
         String configFileName = "all_xml.txt";
         String valuesConfigFileName = "strcheck_config.txt";
         String xmlFilePath = "allStrings.xls";
+
         if (EnviromentBuilder.isValidArgsTwo(args)) {
             return;
         }
@@ -57,24 +58,21 @@ public class CollectAllStringsWithParent {
             WritableSheet sheet = workbook.createSheet("strings", 0);
             Label label = new Label(0, 0, "String Name");
             sheet.addCell(label);
+
             Label pLabel = new Label(1, 0, "App Path");
             sheet.addCell(pLabel);
-            int count = 2;
 
-            String resDir;
-            Iterator var14;
-            for (var14 = valuesSet.iterator(); var14.hasNext(); ++count) {
-                resDir = (String) var14.next();
-                Label contentLabel = new Label(count, 0, resDir);
+            int count = 2;
+            for (String str : valuesSet) {
+                Label contentLabel = new Label(count, 0, str);
                 sheet.addCell(contentLabel);
+                count++;
             }
 
             workbook.write();
             workbook.close();
-            var14 = resDirPathSet.iterator();
 
-            while (var14.hasNext()) {
-                resDir = (String) var14.next();
+            for (String resDir : resDirPathSet) {
                 workbook = Workbook.createWorkbook(xmlFile, Workbook.getWorkbook(xmlFile));
                 sheet = workbook.getSheet(0);
                 collectAllString(filePath, resDir, valuesSet, sheet);
@@ -92,14 +90,12 @@ public class CollectAllStringsWithParent {
         List<String> keys = new ArrayList();
         Map<String, String> valuesResource = EnviromentBuilder.readStringValueFromDir(filePath + resDir + File.separator + "res" + File.separator + (String) valuesSet.get(0), keys);
         Map<String, Map<String, String>> valuesResourceMap = new HashMap();
-        valuesSet = valuesSet.subList(1, valuesSet.size());
-        Iterator var8 = valuesSet.iterator();
 
-        while (var8.hasNext()) {
-            String key = (String) var8.next();
+        valuesSet = valuesSet.subList(1, valuesSet.size());
+
+        for (String key : valuesSet){
             Map<String, String> valuesResourceTemp = new HashMap();
             int index = key.indexOf("-");
-
             while (index != -1) {
                 index = key.indexOf("-", index + 1);
                 if (index == -1) {

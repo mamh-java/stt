@@ -29,7 +29,6 @@ import java.io.File;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -54,35 +53,28 @@ public class CreateDatabase {
         List<String> valuesSet = EnviromentBuilder.scanValuesList(valuesConfigFileName);
         File filePathFile = new File(filePath);
 
-        String resDir;
-        String lineStr;
         try {
-            Iterator var8 = resDirPathSet.iterator();
-
-            while (var8.hasNext()) {
-                resDir = (String) var8.next();
+            for (String resDir : resDirPathSet) {
                 String baseDir = filePathFile.getName() + File.separator + resDir;
                 File baseDirFile = new File(baseDir);
                 if (!baseDirFile.exists()) {
-                    baseDirFile.mkdirs();
+                    boolean b = baseDirFile.mkdirs();
                 }
-
-                lineStr = "allStrings.xls";
-                File xmlFile = new File(baseDirFile, lineStr);
+                String xmlFilePath = "allStrings.xls";
+                File xmlFile = new File(baseDirFile, xmlFilePath);
                 WritableWorkbook workbook = Workbook.createWorkbook(xmlFile);
                 WritableSheet sheet = workbook.createSheet("strings", 0);
+
                 Label label = new Label(0, 0, "String Name");
                 sheet.addCell(label);
                 Label pLabel = new Label(1, 0, "App Path");
                 sheet.addCell(pLabel);
                 int count = 2;
-
-                for (Iterator var19 = valuesSet.iterator(); var19.hasNext(); ++count) {
-                    String str = (String) var19.next();
+                for (String str : valuesSet) {
                     Label contentLabel = new Label(count, 0, str);
                     sheet.addCell(contentLabel);
+                    count++;
                 }
-
                 workbook.write();
                 workbook.close();
                 workbook = Workbook.createWorkbook(xmlFile, Workbook.getWorkbook(xmlFile));
@@ -91,74 +83,66 @@ public class CreateDatabase {
                 workbook.write();
                 workbook.close();
             }
-        } catch (Exception var22) {
-            var22.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
-        resDir = "zip -r " + filePathFile.getName() + ".zip " + filePathFile.getName();
+        String cmd = "zip -r " + filePathFile.getName() + ".zip " + filePathFile.getName();
         String rmcmd = "rm -rf " + filePathFile.getName();
         Runtime run = Runtime.getRuntime();
 
         try {
-            Utils.logout("CMD:" + resDir);
-            Process p = run.exec(resDir);
+            Utils.logout("CMD:" + cmd);
+            Process p = run.exec(cmd);
             BufferedInputStream in = new BufferedInputStream(p.getInputStream());
             BufferedReader inBr = new BufferedReader(new InputStreamReader(in));
 
+            String lineStr;
             while ((lineStr = inBr.readLine()) != null) {
                 Utils.logout(lineStr);
             }
-
-            if (p.waitFor() != 0 && p.exitValue() == 1) {
-                Utils.logout("����ִ��ʧ��!");
+            if ((p.waitFor() != 0) && (p.exitValue() == 1)) {
+                Utils.logout("??????????!");
             }
-
             inBr.close();
             in.close();
+
             Utils.logout("CMD:" + rmcmd);
             p = run.exec(rmcmd);
             in = new BufferedInputStream(p.getInputStream());
             inBr = new BufferedReader(new InputStreamReader(in));
-
             while ((lineStr = inBr.readLine()) != null) {
                 Utils.logout(lineStr);
             }
-
-            if (p.waitFor() != 0 && p.exitValue() == 1) {
-                Utils.logout("����ִ��ʧ��!");
+            if ((p.waitFor() != 0) && (p.exitValue() == 1)) {
+                Utils.logout("??????????!");
             }
-
             inBr.close();
             in.close();
-        } catch (Exception var21) {
-            var21.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
 
     }
 
     public static void collectAllString(String filePath, String resDir, List<String> valuesSet, WritableSheet sheet) {
-        List<String> keys = new ArrayList();
+        List<String> keys = new ArrayList<>();
         Map<String, String> valuesResource = EnviromentBuilder.readStringValueFromDir(filePath + resDir + File.separator + "res" + File.separator + (String) valuesSet.get(0), keys);
-        Map<String, Map<String, String>> valuesResourceMap = new HashMap();
+        Map<String, Map<String, String>> valuesResourceMap = new HashMap<>();
         valuesSet = valuesSet.subList(1, valuesSet.size());
-        Iterator var8 = valuesSet.iterator();
 
-        while (var8.hasNext()) {
-            String key = (String) var8.next();
-            Map<String, String> valuesResourceTemp = new HashMap();
+        for (String key : valuesSet) {
+            Map<String, String> valuesResourceTemp = new HashMap<>();
             int index = key.indexOf("-");
-
             while (index != -1) {
                 index = key.indexOf("-", index + 1);
                 if (index == -1) {
                     break;
                 }
-
                 String temp = key.substring(0, index);
                 valuesResourceTemp.putAll(EnviromentBuilder.readStringValueFromDir(filePath + resDir + File.separator + "res" + File.separator + temp, (List) null));
             }
-
             valuesResourceTemp.putAll(EnviromentBuilder.readStringValueFromDir(filePath + resDir + File.separator + "res" + File.separator + key, (List) null));
             valuesResourceMap.put(key, valuesResourceTemp);
         }
@@ -166,26 +150,25 @@ public class CreateDatabase {
         try {
             int count = sheet.getRows();
 
-            for (Iterator var21 = keys.iterator(); var21.hasNext(); ++count) {
-                String key = (String) var21.next();
+            for (String key : keys) {
                 Label labelKey = new Label(0, count, key);
                 Label labelPath = new Label(1, count, resDir);
-                Label labelValue = new Label(2, count, (String) valuesResource.get(key));
+                Label labelValue = new Label(2, count, valuesResource.get(key));
                 sheet.addCell(labelKey);
                 sheet.addCell(labelPath);
                 sheet.addCell(labelValue);
-                int verCount = 3;
 
-                for (Iterator var15 = valuesSet.iterator(); var15.hasNext(); ++verCount) {
-                    String str = (String) var15.next();
+                int verCount = 3;
+                for (String str : valuesSet) {
                     String temp = "";
-                    if (valuesResourceMap.get(str) != null && ((Map) valuesResourceMap.get(str)).get(key) != null) {
+                    if ((valuesResourceMap.get(str) != null) && (((Map) valuesResourceMap.get(str)).get(key) != null)) {
                         temp = (String) ((Map) valuesResourceMap.get(str)).get(key);
                     }
-
                     Label contentLabel = new Label(verCount, count, temp);
                     sheet.addCell(contentLabel);
+                    verCount++;
                 }
+                count++;
             }
         } catch (Exception var18) {
             var18.printStackTrace();

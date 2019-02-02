@@ -28,7 +28,6 @@ import com.mage.stringtranslationtools.database.TranslationStringDatabase;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -37,8 +36,6 @@ import jxl.Workbook;
 import jxl.write.Label;
 import jxl.write.WritableSheet;
 import jxl.write.WritableWorkbook;
-import jxl.write.WriteException;
-import jxl.write.biff.RowsExceededException;
 
 public class CollectAllDiffStringsWithParentWithSeperateSheet {
     public CollectAllDiffStringsWithParentWithSeperateSheet() {
@@ -49,25 +46,27 @@ public class CollectAllDiffStringsWithParentWithSeperateSheet {
         String filterFileName = "strcheck_filter.txt";
         String valuesConfigFileName = "strcheck_config.txt";
         String xmlFilePathWithCheckDatabase = "allUntranslatedStrings.xls";
+
         if (EnviromentBuilder.isValidArgsTwo(args)) {
             return;
         }
+
         String filePath = args[1];
+
         Set<String> resDirPathSet = EnviromentBuilder.scanResDirPathList(configFileName);
         Map<String, Boolean> filterMap = EnviromentBuilder.scanFilterItems(filterFileName);
         List<String> valuesSet = EnviromentBuilder.scanValuesList(valuesConfigFileName);
-        File xmlFileWithCheckDatabase = new File(xmlFilePathWithCheckDatabase);
+        File xlsFile = new File(xmlFilePathWithCheckDatabase);
 
         try {
-            String valueBase = (String) valuesSet.get(0);
-            List<String> valuesSetTemp = valuesSet.subList(1, valuesSet.size());
-            WritableWorkbook workbookWithCheckDatabase = Workbook.createWorkbook(xmlFileWithCheckDatabase);
-            Iterator var15 = valuesSetTemp.iterator();
+            String valueBase = valuesSet.get(0);
 
-            String resDir;
-            while (var15.hasNext()) {
-                resDir = (String) var15.next();
-                WritableSheet sheetWithCheckDatabase = workbookWithCheckDatabase.createSheet(resDir, 0);
+            List<String> valuesSetTemp = valuesSet.subList(1, valuesSet.size());
+
+            WritableWorkbook workbook = Workbook.createWorkbook(xlsFile);
+
+            for (String resDir : valuesSetTemp) {
+                WritableSheet sheetWithCheckDatabase = workbook.createSheet(resDir, 0);
                 Label labelWithCheckDatabase = new Label(0, 0, "String Name");
                 sheetWithCheckDatabase.addCell(labelWithCheckDatabase);
                 Label pLabelWithCheckDatabase = new Label(1, 0, "App Path");
@@ -78,16 +77,14 @@ public class CollectAllDiffStringsWithParentWithSeperateSheet {
                 sheetWithCheckDatabase.addCell(contentLabel);
             }
 
-            workbookWithCheckDatabase.write();
-            workbookWithCheckDatabase.close();
-            var15 = resDirPathSet.iterator();
+            workbook.write();
+            workbook.close();
 
-            while (var15.hasNext()) {
-                resDir = (String) var15.next();
-                workbookWithCheckDatabase = Workbook.createWorkbook(xmlFileWithCheckDatabase, Workbook.getWorkbook(xmlFileWithCheckDatabase));
-                collectAllString(filePath, resDir, valuesSet, workbookWithCheckDatabase, filterMap);
-                workbookWithCheckDatabase.write();
-                workbookWithCheckDatabase.close();
+            for (String resDir : resDirPathSet) {
+                workbook = Workbook.createWorkbook(xlsFile, Workbook.getWorkbook(xlsFile));
+                collectAllString(filePath, resDir, valuesSet, workbook, filterMap);
+                workbook.write();
+                workbook.close();
             }
         } catch (Exception var20) {
             var20.printStackTrace();
@@ -105,142 +102,121 @@ public class CollectAllDiffStringsWithParentWithSeperateSheet {
             sheet.addCell(new Label(1, count, resDir));
             sheet.addCell(new Label(2, count, labelValue));
             sheet.addCell(new Label(3, count, labelValueTranslation));
-        } catch (Exception var9) {
-            var9.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
     }
 
-    public static void collectAllString(String filePath, String resDir, List<String> valuesSet, WritableWorkbook workbookWithCheckDatabase, Map<String, Boolean> filterMap) {
-        TranslationStringDatabase translationStringDatabase = new TranslationStringDatabase(".." + File.separator + "database", resDir);
-        List<String> keys = new ArrayList();
-        String valueBase = (String) valuesSet.get(0);
+    public static void collectAllString(String filePath, String resDir, List<String> valuesSet, WritableWorkbook workbook, Map<String, Boolean> filterMap) {
+        TranslationStringDatabase database =
+                new TranslationStringDatabase(".." + File.separator + "database", resDir);
+        List<String> keys = new ArrayList<>();
+        String valueBase = valuesSet.get(0);
         Map<String, String> valuesResource = EnviromentBuilder.readStringValueFromDir(filePath + resDir + File.separator + "res" + File.separator + (String) valuesSet.get(0), keys);
-        Map<String, Map<String, String>> valuesResourceMap = new HashMap();
+
+        Map<String, Map<String, String>> valuesResourceMap = new HashMap<>();
+
         valuesSet = valuesSet.subList(1, valuesSet.size());
-        Iterator var11 = valuesSet.iterator();
 
-        String key;
-        while (var11.hasNext()) {
-            key = (String) var11.next();
-            Map<String, String> valuesResourceTemp = new HashMap();
+        for (String key : valuesSet) {
+            Map<String, String> valuesResourceTemp = new HashMap<>();
+
             int index = key.indexOf("-");
-
             while (index != -1) {
                 index = key.indexOf("-", index + 1);
                 if (index == -1) {
                     break;
                 }
-
-                key = key.substring(0, index);
-                valuesResourceTemp.putAll(EnviromentBuilder.readStringValueFromDir(filePath + resDir + File.separator + "res" + File.separator + key, (List) null));
+                String temp = key.substring(0, index);
+                valuesResourceTemp.putAll(EnviromentBuilder.readStringValueFromDir(filePath + resDir + File.separator + "res" + File.separator + temp, null));
             }
 
-            valuesResourceTemp.putAll(EnviromentBuilder.readStringValueFromDir(filePath + resDir + File.separator + "res" + File.separator + key, (List) null));
+            valuesResourceTemp.putAll(EnviromentBuilder.readStringValueFromDir(filePath + resDir + File.separator + "res" + File.separator + key, null));
             valuesResourceMap.put(key, valuesResourceTemp);
         }
 
-        List<String> tempStringNames = new ArrayList();
+        List<String> tempStringNames = new ArrayList<>();
         String lastName = null;
-
         try {
-            Iterator var18 = keys.iterator();
-
-            while (true) {
-                while (var18.hasNext()) {
-                    key = (String) var18.next();
-                    if (!key.startsWith("A:") && !key.startsWith("P:")) {
+            for (String key : keys) {
+                if ((key.startsWith("A:")) || (key.startsWith("P:"))) {
+                    String itemName = key.substring(0, key.lastIndexOf(":"));
+                    if (itemName.equals(lastName)) {
+                        tempStringNames.add(key);
+                    } else {
                         if (tempStringNames.size() != 0) {
                             if (EnviromentBuilder.isArrayNotTranslated(tempStringNames, valuesResource, resDir, filterMap, valuesSet, valuesResourceMap)) {
-                                writeItems(tempStringNames, resDir, valuesResource, valuesSet, valuesResourceMap, valueBase, translationStringDatabase, workbookWithCheckDatabase);
+                                writeItems(tempStringNames, resDir, valuesResource, valuesSet, valuesResourceMap, valueBase, database, workbook);
                             }
-
                             tempStringNames.clear();
-                            var11 = null;
                         }
-
                         tempStringNames.add(key);
+                        lastName = itemName;
+                    }
+                } else {
+                    if (tempStringNames.size() != 0) {
                         if (EnviromentBuilder.isArrayNotTranslated(tempStringNames, valuesResource, resDir, filterMap, valuesSet, valuesResourceMap)) {
-                            writeItems(tempStringNames, resDir, valuesResource, valuesSet, valuesResourceMap, valueBase, translationStringDatabase, workbookWithCheckDatabase);
+                            writeItems(tempStringNames, resDir, valuesResource, valuesSet, valuesResourceMap, valueBase, database, workbook);
                         }
-
                         tempStringNames.clear();
                         lastName = null;
-                    } else {
-                        String itemName = key.substring(0, key.lastIndexOf(":"));
-                        if (itemName.equals(lastName)) {
-                            tempStringNames.add(key);
-                        } else {
-                            if (tempStringNames.size() != 0) {
-                                if (EnviromentBuilder.isArrayNotTranslated(tempStringNames, valuesResource, resDir, filterMap, valuesSet, valuesResourceMap)) {
-                                    writeItems(tempStringNames, resDir, valuesResource, valuesSet, valuesResourceMap, valueBase, translationStringDatabase, workbookWithCheckDatabase);
-                                }
-
-                                tempStringNames.clear();
-                            }
-
-                            tempStringNames.add(key);
-                            lastName = itemName;
-                        }
                     }
-                }
-
-                if (tempStringNames.size() != 0) {
+                    tempStringNames.add(key);
                     if (EnviromentBuilder.isArrayNotTranslated(tempStringNames, valuesResource, resDir, filterMap, valuesSet, valuesResourceMap)) {
-                        writeItems(tempStringNames, resDir, valuesResource, valuesSet, valuesResourceMap, valueBase, translationStringDatabase, workbookWithCheckDatabase);
+                        writeItems(tempStringNames, resDir, valuesResource, valuesSet, valuesResourceMap, valueBase, database, workbook);
                     }
-
                     tempStringNames.clear();
-                    var11 = null;
+                    lastName = null;
                 }
-                break;
             }
-        } catch (Exception var15) {
-            var15.printStackTrace();
-        }
 
+            if (tempStringNames.size() != 0) {
+                if (EnviromentBuilder.isArrayNotTranslated(tempStringNames, valuesResource, resDir, filterMap, valuesSet, valuesResourceMap)) {
+                    writeItems(tempStringNames, resDir, valuesResource, valuesSet, valuesResourceMap, valueBase, database, workbook);
+                }
+                tempStringNames.clear();
+                lastName = null;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
-    private static void writeItems(List<String> tempStringNames, String resDir, Map<String, String> valuesResource, List<String> valuesSet, Map<String, Map<String, String>> valuesResourceMap, String valueBase, TranslationStringDatabase translationStringDatabase, WritableWorkbook workbookWithCheckDatabase) throws RowsExceededException, WriteException {
-        Iterator var9 = tempStringNames.iterator();
+    private static void writeItems(List<String> tempStringNames, String resDir, Map<String, String> valuesResource,
+                                   List<String> valuesSet, Map<String, Map<String, String>> valuesResourceMap,
+                                   String valueBase, TranslationStringDatabase database, WritableWorkbook workbook) {
 
-        label38:
-        while (var9.hasNext()) {
-            String key = (String) var9.next();
+        for (String key : tempStringNames) {
             Map<String, String> notTranslatedMap = EnviromentBuilder.getNotTranslatedMap(key, valuesSet, valuesResourceMap);
-            notTranslatedMap.put(valueBase, (String) valuesResource.get(key));
+            notTranslatedMap.put(valueBase, valuesResource.get(key));
             Utils.logout("KEY!:" + key);
             Utils.logout(notTranslatedMap.toString());
-            Map<String, Map<String, String>> notTranslatedStringsMap = new HashMap();
+            HashMap<String, Map<String, String>> notTranslatedStringsMap = new HashMap<>();
             notTranslatedStringsMap.put(key, notTranslatedMap);
-            translationStringDatabase.getTranslatedStringsMap(notTranslatedStringsMap, valueBase);
+            database.getTranslatedStringsMap(notTranslatedStringsMap, valueBase);
             Utils.logout("KEY2:" + key);
             Utils.logout(notTranslatedMap.toString());
-            Iterator var13 = valuesSet.iterator();
 
-            while (true) {
-                while (true) {
-                    if (!var13.hasNext()) {
-                        continue label38;
-                    }
+            for (String str : valuesSet) {
+                String temp = "";
 
-                    String str = (String) var13.next();
-                    String temp = "";
-                    if (valuesResourceMap.get(str) != null && ((Map) valuesResourceMap.get(str)).get(key) != null) {
-                        temp = (String) ((Map) valuesResourceMap.get(str)).get(key);
-                    }
-
-                    if (temp != null && temp.length() != 0) {
-                        outputValuesSet(workbookWithCheckDatabase, str, key, resDir, (String) valuesResource.get(key), temp);
-                    } else if (notTranslatedMap.get(str) != null && ((String) notTranslatedMap.get(str)).length() != 0) {
-                        outputValuesSet(workbookWithCheckDatabase, str, key, resDir, (String) valuesResource.get(key), (String) notTranslatedMap.get(str));
-                    } else {
-                        outputValuesSet(workbookWithCheckDatabase, str, key, resDir, (String) valuesResource.get(key), temp);
-                    }
+                if (valuesResourceMap.get(str) != null && valuesResourceMap.get(str).get(key) != null) {
+                    temp = valuesResourceMap.get(str).get(key);
                 }
+
+                if (temp == null || temp.length() == 0) {
+                    if (notTranslatedMap.get(str) != null && notTranslatedMap.get(str).length() != 0) {
+                        outputValuesSet(workbook, str, key, resDir, valuesResource.get(key), notTranslatedMap.get(str));
+                        continue;
+                    }
+                    outputValuesSet(workbook, str, key, resDir, valuesResource.get(key), temp);
+                    continue;
+                }
+
+                outputValuesSet(workbook, str, key, resDir, valuesResource.get(key), temp);
             }
         }
-
     }
 }
 

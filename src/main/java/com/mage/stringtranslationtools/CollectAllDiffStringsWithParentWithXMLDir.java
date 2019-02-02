@@ -31,7 +31,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -40,8 +39,6 @@ import jxl.Workbook;
 import jxl.write.Label;
 import jxl.write.WritableSheet;
 import jxl.write.WritableWorkbook;
-import jxl.write.WriteException;
-import jxl.write.biff.RowsExceededException;
 
 public class CollectAllDiffStringsWithParentWithXMLDir {
     private static File xmlFileDir = new File("./translation/");
@@ -54,9 +51,11 @@ public class CollectAllDiffStringsWithParentWithXMLDir {
         String filterFileName = "strcheck_filter.txt";
         String valuesConfigFileName = "strcheck_config.txt";
         String xmlFilePath = "translated.xls";
+
         if (EnviromentBuilder.isValidArgsTwo(args)) {
             return;
         }
+
         String filePath = args[1];
         Set<String> resDirPathSet = EnviromentBuilder.scanResDirPathList(configFileName);
         Map<String, Boolean> filterMap = EnviromentBuilder.scanFilterItems(filterFileName);
@@ -67,11 +66,8 @@ public class CollectAllDiffStringsWithParentWithXMLDir {
             WritableWorkbook workbook = Workbook.createWorkbook(xmlFile);
             String valueBase = (String) valuesSet.get(0);
             List<String> valuesSetTemp = valuesSet.subList(1, valuesSet.size());
-            Iterator var15 = valuesSetTemp.iterator();
 
-            String resDir;
-            while (var15.hasNext()) {
-                resDir = (String) var15.next();
+            for (String resDir : valuesSetTemp) {
                 WritableSheet sheet = workbook.createSheet(resDir, 0);
                 Label label = new Label(0, 0, "String Name");
                 sheet.addCell(label);
@@ -85,17 +81,15 @@ public class CollectAllDiffStringsWithParentWithXMLDir {
 
             workbook.write();
             workbook.close();
-            var15 = resDirPathSet.iterator();
 
-            while (var15.hasNext()) {
-                resDir = (String) var15.next();
+            for (String resDir : resDirPathSet) {
                 workbook = Workbook.createWorkbook(xmlFile, Workbook.getWorkbook(xmlFile));
                 collectAllString(filePath, resDir, valuesSet, workbook, filterMap);
                 workbook.write();
                 workbook.close();
             }
-        } catch (Exception var20) {
-            var20.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
     }
@@ -116,162 +110,129 @@ public class CollectAllDiffStringsWithParentWithXMLDir {
     }
 
     public static void collectAllString(String filePath, String resDir, List<String> valuesSet, WritableWorkbook workbook, Map<String, Boolean> filterMap) {
-        TranslationStringDatabase translationStringDatabase = new TranslationStringDatabase(".." + File.separator + "database", resDir);
-        List<String> keys = new ArrayList();
-        String valueBase = (String) valuesSet.get(0);
+        TranslationStringDatabase database =
+                new TranslationStringDatabase(".." + File.separator + "database", resDir);
+        List<String> keys = new ArrayList<>();
+        String valueBase = valuesSet.get(0);
         Map<String, String> valuesResource = EnviromentBuilder.readStringValueFromDir(filePath + resDir + File.separator + "res" + File.separator + (String) valuesSet.get(0), keys);
-        Map<String, Map<String, String>> valuesResourceMap = new HashMap();
+
+        Map<String, Map<String, String>> valuesResourceMap = new HashMap<>();
+
         valuesSet = valuesSet.subList(1, valuesSet.size());
-        Iterator var11 = valuesSet.iterator();
 
-        while (var11.hasNext()) {
-            String key = (String) var11.next();
-            Map<String, String> valuesResourceTemp = new HashMap();
-            int index = key.indexOf("-");
+        for (String key : valuesSet) {
+            String temp = key;
+            Map<String, String> valuesResourceTemp = new HashMap<>();
 
+            int index = temp.indexOf("-");
             while (index != -1) {
                 index = key.indexOf("-", index + 1);
                 if (index == -1) {
                     break;
                 }
-
-                String temp = key.substring(0, index);
-                valuesResourceTemp.putAll(EnviromentBuilder.readStringValueFromDir(filePath + resDir + File.separator + "res" + File.separator + temp, (List) null));
+                temp = key.substring(0, index);
+                valuesResourceTemp.putAll(EnviromentBuilder.readStringValueFromDir(filePath + resDir + File.separator + "res" + File.separator + temp, null));
             }
 
-            valuesResourceTemp.putAll(EnviromentBuilder.readStringValueFromDir(filePath + resDir + File.separator + "res" + File.separator + key, (List) null));
+            valuesResourceTemp.putAll(EnviromentBuilder.readStringValueFromDir(filePath + resDir + File.separator + "res" + File.separator + key, null));
             valuesResourceMap.put(key, valuesResourceTemp);
         }
 
-        List<String> tempStringNames = new ArrayList();
+        List<String> tempStringNames = new ArrayList<>();
         String lastName = null;
-
         try {
-            Map<String, ArrayList<Item>> itemsMap = new HashMap();
-            Iterator var21 = valuesSet.iterator();
-
-            String key;
-            while (var21.hasNext()) {
-                key = (String) var21.next();
-                ArrayList<Item> itemsList = new ArrayList();
-                itemsMap.put(key, itemsList);
+            Map<String, ArrayList<Item>> itemsMap = new HashMap<>();
+            for (String str : valuesSet) {
+                ArrayList<Item> itemsList = new ArrayList<>();
+                itemsMap.put(str, itemsList);
             }
-
-            var21 = keys.iterator();
-
-            while (true) {
-                while (var21.hasNext()) {
-                    key = (String) var21.next();
-                    if (!key.startsWith("A:") && !key.startsWith("P:")) {
+            for (String key : keys) {
+                if ((key.startsWith("A:")) || (key.startsWith("P:"))) {
+                    String itemName = key.substring(0, key.lastIndexOf(":"));
+                    if (itemName.equals(lastName)) {
+                        tempStringNames.add(key);
+                    } else {
                         if (tempStringNames.size() != 0) {
                             if (EnviromentBuilder.isArrayNotTranslated(tempStringNames, valuesResource, resDir, filterMap, valuesSet, valuesResourceMap)) {
-                                writeItems(tempStringNames, resDir, valuesResource, valuesSet, valuesResourceMap, valueBase, translationStringDatabase, workbook, itemsMap);
+                                writeItems(tempStringNames, resDir, valuesResource, valuesSet, valuesResourceMap, valueBase, database, workbook, itemsMap);
                             }
-
                             tempStringNames.clear();
-                            var11 = null;
                         }
-
                         tempStringNames.add(key);
+                        lastName = itemName;
+                    }
+                } else {
+                    if (tempStringNames.size() != 0) {
                         if (EnviromentBuilder.isArrayNotTranslated(tempStringNames, valuesResource, resDir, filterMap, valuesSet, valuesResourceMap)) {
-                            writeItems(tempStringNames, resDir, valuesResource, valuesSet, valuesResourceMap, valueBase, translationStringDatabase, workbook, itemsMap);
+                            writeItems(tempStringNames, resDir, valuesResource, valuesSet, valuesResourceMap, valueBase, database, workbook, itemsMap);
                         }
-
                         tempStringNames.clear();
                         lastName = null;
-                    } else {
-                        String itemName = key.substring(0, key.lastIndexOf(":"));
-                        if (itemName.equals(lastName)) {
-                            tempStringNames.add(key);
-                        } else {
-                            if (tempStringNames.size() != 0) {
-                                if (EnviromentBuilder.isArrayNotTranslated(tempStringNames, valuesResource, resDir, filterMap, valuesSet, valuesResourceMap)) {
-                                    writeItems(tempStringNames, resDir, valuesResource, valuesSet, valuesResourceMap, valueBase, translationStringDatabase, workbook, itemsMap);
-                                }
-
-                                tempStringNames.clear();
-                            }
-
-                            tempStringNames.add(key);
-                            lastName = itemName;
-                        }
                     }
-                }
-
-                if (tempStringNames.size() != 0) {
+                    tempStringNames.add(key);
                     if (EnviromentBuilder.isArrayNotTranslated(tempStringNames, valuesResource, resDir, filterMap, valuesSet, valuesResourceMap)) {
-                        writeItems(tempStringNames, resDir, valuesResource, valuesSet, valuesResourceMap, valueBase, translationStringDatabase, workbook, itemsMap);
+                        writeItems(tempStringNames, resDir, valuesResource, valuesSet, valuesResourceMap, valueBase, database, workbook, itemsMap);
                     }
-
                     tempStringNames.clear();
-                    var11 = null;
+                    lastName = null;
                 }
-
-                var21 = valuesSet.iterator();
-
-                while (var21.hasNext()) {
-                    key = (String) var21.next();
-                    writeItemsToXML((List) itemsMap.get(key), key, xmlFileDir);
-                }
-                break;
             }
-        } catch (Exception var16) {
-            var16.printStackTrace();
-        }
 
+            if (tempStringNames.size() != 0) {
+                if (EnviromentBuilder.isArrayNotTranslated(tempStringNames, valuesResource, resDir, filterMap, valuesSet, valuesResourceMap)) {
+                    writeItems(tempStringNames, resDir, valuesResource, valuesSet, valuesResourceMap, valueBase, database, workbook, itemsMap);
+                }
+                tempStringNames.clear();
+                lastName = null;
+            }
+            for (String str : valuesSet) {
+                writeItemsToXML((List) itemsMap.get(str), str, xmlFileDir);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
-    private static void writeItems(List<String> tempStringNames, String resDir, Map<String, String> valuesResource, List<String> valuesSet, Map<String, Map<String, String>> valuesResourceMap, String valueBase, TranslationStringDatabase translationStringDatabase, WritableWorkbook workbook, Map<String, ArrayList<Item>> itemsMap) throws RowsExceededException, WriteException {
-        Iterator var10 = tempStringNames.iterator();
-
-        label38:
-        while (var10.hasNext()) {
-            String key = (String) var10.next();
+    private static void writeItems(List<String> tempStringNames, String resDir, Map<String, String> valuesResource, List<String> valuesSet,
+                                   Map<String, Map<String, String>> valuesResourceMap, String valueBase, TranslationStringDatabase database,
+                                   WritableWorkbook workbook, Map<String, ArrayList<Item>> itemsMap) {
+        for (String key : tempStringNames) {
             Map<String, String> notTranslatedMap = EnviromentBuilder.getNotTranslatedMap(key, valuesSet, valuesResourceMap);
-            notTranslatedMap.put(valueBase, (String) valuesResource.get(key));
+            notTranslatedMap.put(valueBase, valuesResource.get(key));
             Utils.logout("KEY!:" + key);
             Utils.logout(notTranslatedMap.toString());
-            Map<String, Map<String, String>> notTranslatedStringsMap = new HashMap();
+            HashMap<String, Map<String, String>> notTranslatedStringsMap = new HashMap<String, Map<String, String>>();
             notTranslatedStringsMap.put(key, notTranslatedMap);
-            translationStringDatabase.getTranslatedStringsMap(notTranslatedStringsMap, valueBase);
+            database.getTranslatedStringsMap(notTranslatedStringsMap, valueBase);
             Utils.logout("KEY2:" + key);
             Utils.logout(notTranslatedMap.toString());
-            Iterator var14 = valuesSet.iterator();
-
-            while (true) {
-                while (true) {
-                    if (!var14.hasNext()) {
-                        continue label38;
-                    }
-
-                    String str = (String) var14.next();
-                    String temp = "";
-                    if (valuesResourceMap.get(str) != null && ((Map) valuesResourceMap.get(str)).get(key) != null) {
-                        temp = (String) ((Map) valuesResourceMap.get(str)).get(key);
-                    }
-
-                    if (temp != null && temp.length() != 0) {
-                        ((ArrayList) itemsMap.get(str)).add(new Item(key, resDir, (String) valuesResource.get(key), (String) valuesResource.get(key)));
-                    } else if (notTranslatedMap.get(str) != null && ((String) notTranslatedMap.get(str)).length() != 0) {
-                        outputValuesSet(workbook, str, key, resDir, (String) valuesResource.get(key), (String) notTranslatedMap.get(str));
-                    } else {
-                        ((ArrayList) itemsMap.get(str)).add(new Item(key, resDir, (String) valuesResource.get(key), (String) valuesResource.get(key)));
-                    }
+            for (String str : valuesSet) {
+                String temp = "";
+                if (valuesResourceMap.get(str) != null && valuesResourceMap.get(str).get(key) != null) {
+                    temp = valuesResourceMap.get(str).get(key);
                 }
+                if (temp == null || temp.length() == 0) {
+                    if (notTranslatedMap.get(str) != null && notTranslatedMap.get(str).length() != 0) {
+                        CollectAllDiffStringsWithParentWithXMLDir.outputValuesSet(workbook, str, key, resDir, valuesResource.get(key), notTranslatedMap.get(str));
+                        continue;
+                    }
+                    itemsMap.get(str).add(new Item(key, resDir, valuesResource.get(key), valuesResource.get(key)));
+                    continue;
+                }
+                itemsMap.get(str).add(new Item(key, resDir, valuesResource.get(key), valuesResource.get(key)));
             }
         }
-
     }
 
     public static void writeItemsToXML(List<Item> items, String valuesDir, File fileDirBase) {
         if (items.size() != 0) {
             try {
-                String resPath = ((Item) items.get(0)).getPath();
+                String resPath = items.get(0).getPath();
                 resPath = resPath.replace('/', File.separatorChar);
                 String fileDir = valuesDir + File.separator + resPath + File.separator + "res" + File.separator + valuesDir;
                 File file = new File(fileDirBase, fileDir);
                 if (!file.exists()) {
-                    file.mkdirs();
+                    boolean b = file.mkdirs();
                 }
 
                 BufferedWriter fw = new BufferedWriter(new FileWriter(new File(file, "strings.xml")));
@@ -279,43 +240,40 @@ public class CollectAllDiffStringsWithParentWithXMLDir {
                 fw.newLine();
                 fw.write("<resources xmlns:xliff=\"urn:oasis:names:tc:xliff:document:1.2\">");
                 fw.newLine();
+
                 List<Item> itemsTemp = null;
                 String lastName = null;
-                Iterator var10 = items.iterator();
 
-                while (var10.hasNext()) {
-                    Item item = (Item) var10.next();
+                for (Item item : items) {
                     if (item.getName().startsWith("S:")) {
                         writeItemToResources(itemsTemp, fw);
-                        itemsTemp = new ArrayList();
+                        itemsTemp = new ArrayList<>();
                         lastName = item.getName();
                         itemsTemp.add(item);
-                    } else {
-                        String itemName;
-                        if (item.getName().startsWith("P:")) {
-                            itemName = item.getName().substring(0, item.getName().lastIndexOf(":"));
-                            if (itemName.equals(lastName)) {
-                                lastName = itemName;
-                                itemsTemp.add(item);
-                            } else {
-                                writeItemToResources(itemsTemp, fw);
-                                itemsTemp = new ArrayList();
-                                lastName = itemName;
-                                itemsTemp.add(item);
-                            }
-                        } else if (item.getName().startsWith("A:")) {
-                            itemName = item.getName().substring(0, item.getName().lastIndexOf(":"));
-                            if (itemName.equals(lastName)) {
-                                lastName = itemName;
-                                itemsTemp.add(item);
-                            } else {
-                                writeItemToResources(itemsTemp, fw);
-                                itemsTemp = new ArrayList();
-                                lastName = itemName;
-                                itemsTemp.add(item);
-                            }
+                    } else if (item.getName().startsWith("P:")) {
+                        String itemName = item.getName().substring(0, item.getName().lastIndexOf(":"));
+                        if (itemName.equals(lastName)) {
+                            lastName = itemName;
+                            itemsTemp.add(item);
+                        } else {
+                            writeItemToResources(itemsTemp, fw);
+                            itemsTemp = new ArrayList<>();
+                            lastName = itemName;
+                            itemsTemp.add(item);
+                        }
+                    } else if (item.getName().startsWith("A:")) {
+                        String itemName = item.getName().substring(0, item.getName().lastIndexOf(":"));
+                        if (itemName.equals(lastName)) {
+                            lastName = itemName;
+                            itemsTemp.add(item);
+                        } else {
+                            writeItemToResources(itemsTemp, fw);
+                            itemsTemp = new ArrayList<>();
+                            lastName = itemName;
+                            itemsTemp.add(item);
                         }
                     }
+
                 }
 
                 writeItemToResources(itemsTemp, fw);
@@ -331,70 +289,72 @@ public class CollectAllDiffStringsWithParentWithXMLDir {
     }
 
     public static void writeItemToResources(List<Item> items, BufferedWriter bufferedWriter) throws IOException {
-        if (items != null) {
-            Item itemFirst = (Item) items.get(0);
-            if (itemFirst.getName().startsWith("S:")) {
-                bufferedWriter.write("    ");
-                bufferedWriter.write("<string name=\"");
-                bufferedWriter.write(itemFirst.getName().substring(itemFirst.getName().indexOf(":") + 1, itemFirst.getName().length()));
-                bufferedWriter.write("\">");
-                bufferedWriter.write("\"" + itemFirst.getStringTranslation() + "\"");
-                bufferedWriter.write("</string>");
-                bufferedWriter.newLine();
-            }
+        if (items == null) {
+            return;
+        }
 
-            String name;
-            if (itemFirst.getName().startsWith("P:")) {
-                name = itemFirst.getName();
-                bufferedWriter.write("    ");
-                bufferedWriter.write("<plurals name=\"");
-                bufferedWriter.write(name.substring(name.indexOf(":") + 1, name.lastIndexOf(":")));
-                bufferedWriter.write("\">");
-                bufferedWriter.newLine();
-                Iterator var5 = items.iterator();
-
-                while (var5.hasNext()) {
-                    Item item = (Item) var5.next();
-                    String itemName = item.getName();
-                    String pluralsQuantity = itemName.substring(itemName.lastIndexOf(":") + 1, itemName.length());
-                    bufferedWriter.write("        ");
-                    bufferedWriter.write("<item quantity=\"");
-                    bufferedWriter.write(pluralsQuantity);
-                    bufferedWriter.write("\">");
-                    bufferedWriter.write("\"" + item.getStringTranslation() + "\"");
-                    bufferedWriter.write("</item>");
-                    bufferedWriter.newLine();
-                }
-
-                bufferedWriter.write("    ");
-                bufferedWriter.write("</plurals>");
-                bufferedWriter.newLine();
-            }
-
-            if (itemFirst.getName().startsWith("A:")) {
-                name = itemFirst.getName();
-                String stringArrayName = name.substring(name.indexOf(":") + 1, name.lastIndexOf(":"));
-                bufferedWriter.write("    ");
-                bufferedWriter.write("<string-array name=\"");
-                bufferedWriter.write(stringArrayName);
-                bufferedWriter.write("\">");
-                bufferedWriter.newLine();
-                Iterator var10 = items.iterator();
-
-                while (var10.hasNext()) {
-                    Item item = (Item) var10.next();
-                    bufferedWriter.write("        ");
-                    bufferedWriter.write("<item>");
-                    bufferedWriter.write("\"" + item.getStringTranslation() + "\"");
-                    bufferedWriter.write("</item>");
-                    bufferedWriter.newLine();
-                }
-
-                bufferedWriter.write("    ");
-                bufferedWriter.write("</string-array>");
-                bufferedWriter.newLine();
-            }
-
+        String name = items.get(0).getName(); //一般这个不会是null
+        if (name.startsWith("S:")) {
+            writeString(items, bufferedWriter, name);
+        } else if (name.startsWith("P:")) {
+            writePlurals(items, bufferedWriter, name);
+        } else if (name.startsWith("A:")) {
+            writeArray(items, bufferedWriter, name);
         }
     }
+
+    private static void writeArray(List<Item> items, BufferedWriter bufferedWriter, String name) throws IOException {
+        String stringArrayName = name.substring(name.indexOf(":") + 1, name.lastIndexOf(":"));
+        bufferedWriter.write("    ");
+        bufferedWriter.write("<string-array name=\"");
+        bufferedWriter.write(stringArrayName);
+        bufferedWriter.write("\">");
+        bufferedWriter.newLine();
+        for (Item item : items) {
+            bufferedWriter.write("        ");
+            bufferedWriter.write("<item>");
+            bufferedWriter.write("\"" + item.getStringTranslation() + "\"");
+            bufferedWriter.write("</item>");
+            bufferedWriter.newLine();
+        }
+        bufferedWriter.write("    ");
+        bufferedWriter.write("</string-array>");
+        bufferedWriter.newLine();
+    }
+
+    private static void writePlurals(List<Item> items, BufferedWriter bufferedWriter, String name) throws IOException {
+        bufferedWriter.write("    ");
+        bufferedWriter.write("<plurals name=\"");
+        bufferedWriter.write(name.substring(name.indexOf(":") + 1, name.lastIndexOf(":")));
+        bufferedWriter.write("\">");
+        bufferedWriter.newLine();
+        for (Item item : items) {
+            String itemName = item.getName();
+            String pluralsQuantity = itemName.substring(itemName.lastIndexOf(":") + 1);
+            bufferedWriter.write("        ");
+            bufferedWriter.write("<item quantity=\"");
+            bufferedWriter.write(pluralsQuantity);
+            bufferedWriter.write("\">");
+            bufferedWriter.write("\"" + item.getStringTranslation() + "\"");
+            bufferedWriter.write("</item>");
+            bufferedWriter.newLine();
+        }
+        bufferedWriter.write("    ");
+        bufferedWriter.write("</plurals>");
+        bufferedWriter.newLine();
+    }
+
+
+    private static void writeString(List<Item> items, BufferedWriter bufferedWriter, String name) throws IOException {
+        bufferedWriter.write("    ");
+        bufferedWriter.write("<string name=\"");
+        bufferedWriter.write(name.substring(name.indexOf(":") + 1));
+        bufferedWriter.write("\">");
+        for (Item item : items) { // 这个items 列表只会有一个元素的，这里也使用个循环，和其他2个方法类似
+            bufferedWriter.write("\"" + item.getStringTranslation() + "\""); //插入 到 <string></string> 标签之间的值
+        }
+        bufferedWriter.write("</string>");
+        bufferedWriter.newLine();
+    }
+
 }

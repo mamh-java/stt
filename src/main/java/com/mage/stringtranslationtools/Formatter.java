@@ -43,26 +43,29 @@ public class Formatter {
     public static List<String> scanFormatStrings(String format) {
         FormatSpecifierParser fsp = new FormatSpecifierParser(format);
         List<String> formatStringList = null;
-        if (format.indexOf("%") < 0) {
-            return formatStringList;
-        } else {
-            formatStringList = new LinkedList();
-            int length = format.length();
-            int i = 0;
 
-            while(i < length) {
-                int nextPercent = format.indexOf(37, i);
-                int plainTextEnd = nextPercent == -1 ? length : nextPercent;
-                i = plainTextEnd;
-                if (plainTextEnd < length) {
-                    fsp.parseFormatToken(plainTextEnd + 1);
-                    formatStringList.add(format.substring(plainTextEnd, fsp.i));
-                    i = fsp.i;
-                }
-            }
-
+        if (!format.contains("%")) {
             return formatStringList;
         }
+
+        formatStringList = new LinkedList<>();
+        int length = format.length();
+
+        int i = 0;
+        while (i < length) {
+            int nextPercent = format.indexOf(37, i);
+            int plainTextEnd = nextPercent == -1 ? length : nextPercent;
+
+            i = plainTextEnd;
+            if (plainTextEnd < length) {
+                fsp.parseFormatToken(plainTextEnd + 1);
+                formatStringList.add(format.substring(plainTextEnd, fsp.i));
+                i = fsp.i;
+            }
+        }
+
+        return formatStringList;
+
     }
 
     private static class FormatSpecifierParser {
@@ -76,10 +79,10 @@ public class Formatter {
             this.length = format.length();
         }
 
-        FormatToken parseFormatToken(int offset) {
+        void parseFormatToken(int offset) {
             this.startIndex = offset;
             this.i = offset;
-            return this.parseArgumentIndexAndFlags(new FormatToken());
+            this.parseArgumentIndexAndFlags(new FormatToken());
         }
 
         String getFormatSpecifierText() {
@@ -102,7 +105,7 @@ public class Formatter {
             throw new UnknownFormatConversionException(this.getFormatSpecifierText());
         }
 
-        private FormatToken parseArgumentIndexAndFlags(FormatToken token) {
+        private void parseArgumentIndexAndFlags(FormatToken token) {
             int position = this.i;
             int ch = this.peek();
             if (Character.isDigit(ch)) {
@@ -116,7 +119,8 @@ public class Formatter {
                     token.setArgIndex(Math.max(0, number - 1));
                 } else {
                     if (ch != 48) {
-                        return this.parseWidth(token, number);
+                        this.parseWidth(token, number);
+                        return;
                     }
 
                     this.i = position;
@@ -126,36 +130,44 @@ public class Formatter {
                 this.advance();
             }
 
-            while(token.setFlag(this.peek())) {
+            while (token.setFlag(this.peek())) {
                 this.advance();
             }
 
             ch = this.peek();
             if (Character.isDigit(ch)) {
-                return this.parseWidth(token, this.nextInt());
+                this.parseWidth(token, this.nextInt());
             } else {
-                return ch == 46 ? this.parsePrecision(token) : this.parseConversionType(token);
+                if (ch == 46) {
+                    this.parsePrecision(token);
+                } else {
+                    this.parseConversionType(token);
+                }
             }
         }
 
-        private FormatToken parseWidth(FormatToken token, int width) {
+        private void parseWidth(FormatToken token, int width) {
             token.setWidth(width);
             int ch = this.peek();
-            return ch == 46 ? this.parsePrecision(token) : this.parseConversionType(token);
+            if (ch == 46) {
+                this.parsePrecision(token);
+            } else {
+                this.parseConversionType(token);
+            }
         }
 
-        private FormatToken parsePrecision(FormatToken token) {
+        private void parsePrecision(FormatToken token) {
             this.advance();
             int ch = this.peek();
             if (Character.isDigit(ch)) {
                 token.setPrecision(this.nextInt());
-                return this.parseConversionType(token);
+                this.parseConversionType(token);
             } else {
                 throw this.unknownFormatConversionException();
             }
         }
 
-        private FormatToken parseConversionType(FormatToken token) {
+        private void parseConversionType(FormatToken token) {
             char conversionType = this.advance();
             token.setConversionType(conversionType);
             if (conversionType == 't' || conversionType == 'T') {
@@ -163,24 +175,23 @@ public class Formatter {
                 token.setDateSuffix(dateSuffix);
             }
 
-            return token;
         }
 
         private int nextInt() {
             long value = 0L;
 
-            while(this.i < this.length && Character.isDigit(this.format.charAt(this.i))) {
-                value = 10L * value + (long)(this.format.charAt(this.i++) - 48);
+            while (this.i < this.length && Character.isDigit(this.format.charAt(this.i))) {
+                value = 10L * value + (long) (this.format.charAt(this.i++) - 48);
                 if (value > 2147483647L) {
                     return this.failNextInt();
                 }
             }
 
-            return (int)value;
+            return (int) value;
         }
 
         private int failNextInt() {
-            while(Character.isDigit(this.peek())) {
+            while (Character.isDigit(this.peek())) {
                 this.advance();
             }
 
@@ -216,7 +227,9 @@ public class Formatter {
         }
 
         boolean isDefault() {
-            return !this.flagComma && !this.flagMinus && !this.flagParenthesis && !this.flagPlus && !this.flagSharp && !this.flagSpace && !this.flagZero && this.width == -1 && this.precision == -1;
+            return !this.flagComma && !this.flagMinus &&
+                    !this.flagParenthesis && !this.flagPlus && !this.flagSharp &&
+                    !this.flagSpace && !this.flagZero && this.width == -1 && this.precision == -1;
         }
 
         boolean isPrecisionSet() {
@@ -253,46 +266,46 @@ public class Formatter {
 
         boolean setFlag(int ch) {
             boolean dupe = false;
-            switch(ch) {
-            case 32:
-                dupe = this.flagSpace;
-                this.flagSpace = true;
-                break;
-            case 33:
-            case 34:
-            case 36:
-            case 37:
-            case 38:
-            case 39:
-            case 41:
-            case 42:
-            case 46:
-            case 47:
-            default:
-                return false;
-            case 35:
-                dupe = this.flagSharp;
-                this.flagSharp = true;
-                break;
-            case 40:
-                dupe = this.flagParenthesis;
-                this.flagParenthesis = true;
-                break;
-            case 43:
-                dupe = this.flagPlus;
-                this.flagPlus = true;
-                break;
-            case 44:
-                dupe = this.flagComma;
-                this.flagComma = true;
-                break;
-            case 45:
-                dupe = this.flagMinus;
-                this.flagMinus = true;
-                break;
-            case 48:
-                dupe = this.flagZero;
-                this.flagZero = true;
+            switch (ch) {
+                case 32:
+                    dupe = this.flagSpace;
+                    this.flagSpace = true;
+                    break;
+                case 33:
+                case 34:
+                case 36:
+                case 37:
+                case 38:
+                case 39:
+                case 41:
+                case 42:
+                case 46:
+                case 47:
+                default:
+                    return false;
+                case 35:
+                    dupe = this.flagSharp;
+                    this.flagSharp = true;
+                    break;
+                case 40:
+                    dupe = this.flagParenthesis;
+                    this.flagParenthesis = true;
+                    break;
+                case 43:
+                    dupe = this.flagPlus;
+                    this.flagPlus = true;
+                    break;
+                case 44:
+                    dupe = this.flagComma;
+                    this.flagComma = true;
+                    break;
+                case 45:
+                    dupe = this.flagMinus;
+                    this.flagMinus = true;
+                    break;
+                case 48:
+                    dupe = this.flagZero;
+                    this.flagZero = true;
             }
 
             if (dupe) {
@@ -302,7 +315,7 @@ public class Formatter {
                     this.strFlags = new StringBuilder(7);
                 }
 
-                this.strFlags.append((char)ch);
+                this.strFlags.append((char) ch);
                 return true;
             }
         }
@@ -338,87 +351,87 @@ public class Formatter {
             boolean allowPrecision = true;
             boolean allowWidth = true;
             boolean allowArgument = true;
-            switch(this.conversionType) {
-            case '%':
-                allowArgument = false;
-                allowPrecision = false;
-                break;
-            case 'A':
-            case 'a':
-                allowZero = true;
-                allowSpace = true;
-                allowSharp = true;
-                allowPlus = true;
-            case 'B':
-            case 'H':
-            case 'b':
-            case 'h':
-                break;
-            case 'C':
-            case 'T':
-            case 'c':
-            case 't':
-                allowPrecision = false;
-                break;
-            case 'E':
-            case 'e':
-                allowZero = true;
-                allowSpace = true;
-                allowSharp = true;
-                allowPlus = true;
-                allowParenthesis = true;
-                break;
-            case 'G':
-            case 'g':
-                allowZero = true;
-                allowSpace = true;
-                allowPlus = true;
-                allowParenthesis = true;
-                allowComma = true;
-                break;
-            case 'S':
-            case 's':
-                if (arg instanceof Formattable) {
+            switch (this.conversionType) {
+                case '%':
+                    allowArgument = false;
+                    allowPrecision = false;
+                    break;
+                case 'A':
+                case 'a':
+                    allowZero = true;
+                    allowSpace = true;
                     allowSharp = true;
-                }
-                break;
-            case 'X':
-            case 'o':
-            case 'x':
-                allowZero = true;
-                allowSharp = true;
-                if (arg == null || arg instanceof BigInteger) {
+                    allowPlus = true;
+                case 'B':
+                case 'H':
+                case 'b':
+                case 'h':
+                    break;
+                case 'C':
+                case 'T':
+                case 'c':
+                case 't':
+                    allowPrecision = false;
+                    break;
+                case 'E':
+                case 'e':
+                    allowZero = true;
+                    allowSpace = true;
+                    allowSharp = true;
+                    allowPlus = true;
+                    allowParenthesis = true;
+                    break;
+                case 'G':
+                case 'g':
+                    allowZero = true;
                     allowSpace = true;
                     allowPlus = true;
                     allowParenthesis = true;
-                }
+                    allowComma = true;
+                    break;
+                case 'S':
+                case 's':
+                    if (arg instanceof Formattable) {
+                        allowSharp = true;
+                    }
+                    break;
+                case 'X':
+                case 'o':
+                case 'x':
+                    allowZero = true;
+                    allowSharp = true;
+                    if (arg == null || arg instanceof BigInteger) {
+                        allowSpace = true;
+                        allowPlus = true;
+                        allowParenthesis = true;
+                    }
 
-                allowPrecision = false;
-                break;
-            case 'd':
-                allowZero = true;
-                allowSpace = true;
-                allowPlus = true;
-                allowParenthesis = true;
-                allowComma = true;
-                allowPrecision = false;
-                break;
-            case 'f':
-                allowZero = true;
-                allowSpace = true;
-                allowSharp = true;
-                allowPlus = true;
-                allowParenthesis = true;
-                allowComma = true;
-                break;
-            case 'n':
-                allowMinus = false;
-                allowWidth = false;
-                allowPrecision = false;
-                allowArgument = false;
-                break;
-            default:
-                throw this.unknownFormatConversionException();
+                    allowPrecision = false;
+                    break;
+                case 'd':
+                    allowZero = true;
+                    allowSpace = true;
+                    allowPlus = true;
+                    allowParenthesis = true;
+                    allowComma = true;
+                    allowPrecision = false;
+                    break;
+                case 'f':
+                    allowZero = true;
+                    allowSpace = true;
+                    allowSharp = true;
+                    allowPlus = true;
+                    allowParenthesis = true;
+                    allowComma = true;
+                    break;
+                case 'n':
+                    allowMinus = false;
+                    allowWidth = false;
+                    allowPrecision = false;
+                    allowArgument = false;
+                    break;
+                default:
+                    throw this.unknownFormatConversionException();
             }
 
             String mismatch = null;

@@ -44,68 +44,66 @@ public class CheckFormatStrings {
         String configFileName = "all_xml.txt";
         String valuesConfigFileName = "strcheck_config.txt";
         String xmlFilePath = "allFormattedStrings.xls";
+
         if (EnviromentBuilder.isValidArgsTwo(args)) {
             return;
         }
+
         String filePath = args[1];
+
         Set<String> resDirPathSet = EnviromentBuilder.scanResDirPathList(configFileName);
         List<String> valuesSet = EnviromentBuilder.scanValuesList(valuesConfigFileName);
+
         File xmlFile = new File(xmlFilePath);
 
         try {
             WritableWorkbook workbook = Workbook.createWorkbook(xmlFile);
             WritableSheet sheet = workbook.createSheet("strings", 0);
+
             Label label = new Label(0, 0, "String Name");
             sheet.addCell(label);
+
             Label pLabel = new Label(1, 0, "App Path");
             sheet.addCell(pLabel);
-            int count = 2;
 
-            String resDir;
-            Iterator var14;
-            for (var14 = valuesSet.iterator(); var14.hasNext(); ++count) {
-                resDir = (String) var14.next();
+            int count = 2;
+            for (Iterator iterator = valuesSet.iterator(); iterator.hasNext(); ++count) {
+                String resDir = (String) iterator.next();
                 Label contentLabel = new Label(count, 0, resDir);
                 sheet.addCell(contentLabel);
             }
 
             workbook.write();
             workbook.close();
-            var14 = resDirPathSet.iterator();
 
-            while (var14.hasNext()) {
-                resDir = (String) var14.next();
+            for (String resDir : resDirPathSet) {
                 workbook = Workbook.createWorkbook(xmlFile, Workbook.getWorkbook(xmlFile));
                 sheet = workbook.getSheet(0);
                 collectAllString(filePath, resDir, valuesSet, sheet);
                 workbook.write();
                 workbook.close();
             }
-        } catch (Exception var16) {
-            var16.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
 
     }
 
     public static void collectAllString(String filePath, String resDir, List<String> valuesSet, WritableSheet sheet) {
-        List<String> keys = new ArrayList();
-        Map<String, String> valuesResource = EnviromentBuilder.readStringValueFromDir(filePath + resDir + File.separator + "res" + File.separator + (String) valuesSet.get(0), keys);
-        Map<String, Map<String, String>> valuesResourceMap = new HashMap();
+        List<String> keys = new ArrayList<>();
+        Map<String, String> valuesResource = EnviromentBuilder.readStringValueFromDir(filePath + resDir + File.separator + "res" + File.separator + valuesSet.get(0), keys);
+        Map<String, Map<String, String>> valuesResourceMap = new HashMap<>();
+
         valuesSet = valuesSet.subList(1, valuesSet.size());
-        Iterator var8 = valuesSet.iterator();
-
-        while (var8.hasNext()) {
-            String key = (String) var8.next();
-            Map<String, String> valuesResourceTemp = new HashMap();
+        for (String key : valuesSet) {
+            Map<String, String> valuesResourceTemp = new HashMap<>();
             int index = key.indexOf("-");
-
             while (index != -1) {
                 index = key.indexOf("-", index + 1);
                 if (index == -1) {
                     break;
                 }
-
                 String temp = key.substring(0, index);
                 valuesResourceTemp.putAll(EnviromentBuilder.readStringValueFromDir(filePath + resDir + File.separator + "res" + File.separator + temp, (List) null));
             }
@@ -116,21 +114,14 @@ public class CheckFormatStrings {
 
         try {
             int count = sheet.getRows();
-            Iterator var23 = keys.iterator();
-
-            while (var23.hasNext()) {
-                String key = (String) var23.next();
-
-                Label labelKey;
-                String temp;
+            for (String key : keys) {
                 try {
-                    String baseString = (String) valuesResource.get(key);
+                    String baseString = valuesResource.get(key);
                     boolean isError = false;
-                    int verCount = 3;
 
-                    for (Iterator var29 = valuesSet.iterator(); var29.hasNext(); ++verCount) {
-                        String str = (String) var29.next();
-                        temp = "";
+                    int verCount = 3;
+                    for (String str : valuesSet) {
+                        String temp = "";
                         if (valuesResourceMap.get(str) != null && ((Map) valuesResourceMap.get(str)).get(key) != null) {
                             temp = (String) ((Map) valuesResourceMap.get(str)).get(key);
                         }
@@ -140,41 +131,42 @@ public class CheckFormatStrings {
                             sheet.addCell(contentLabel);
                             isError = true;
                         }
+                        verCount++;
                     }
 
                     if (isError) {
-                        labelKey = new Label(0, count, key);
+                        Label labelKey = new Label(0, count, key);
                         Label labelPath = new Label(1, count, resDir);
                         Label labelValue = new Label(2, count, valuesResource.get(key));
                         sheet.addCell(labelKey);
                         sheet.addCell(labelPath);
                         sheet.addCell(labelValue);
-                        ++count;
+                        count++;
                     }
-                } catch (Exception var19) {
+                } catch (Exception e) {
                     Label labelPath = new Label(1, count, resDir);
-                    labelKey = new Label(2, count, valuesResource.get(key));
+                    Label labelKey = new Label(2, count, valuesResource.get(key));
                     sheet.addCell(labelKey);
                     sheet.addCell(labelPath);
                     sheet.addCell(labelKey);
+
                     int verCount = 3;
 
-                    for (Iterator var16 = valuesSet.iterator(); var16.hasNext(); ++verCount) {
-                        temp = (String) var16.next();
-                        temp = "";
-                        if (valuesResourceMap.get(temp) != null && ((Map) valuesResourceMap.get(temp)).get(key) != null) {
-                            temp = (String) ((Map) valuesResourceMap.get(temp)).get(key);
+                    for (String str : valuesSet) {
+                        String temp = "";
+                        if ((valuesResourceMap.get(str) != null) && (((Map) valuesResourceMap.get(str)).get(key) != null)) {
+                            temp = (String) ((Map) valuesResourceMap.get(str)).get(key);
                         }
-
                         Label contentLabel = new Label(verCount, count, temp);
                         sheet.addCell(contentLabel);
+                        verCount++;
                     }
 
-                    ++count;
+                    count++;
                 }
             }
-        } catch (Exception var20) {
-            var20.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
     }
@@ -190,31 +182,31 @@ public class CheckFormatStrings {
 
     public static boolean checkXliffError(String baseString, String translatedString) {
         int xliffCount = 0;
-
-        for (int index = baseString.indexOf("<xliff:g"); index >= 0; index = baseString.indexOf("<xliff:g", baseString.indexOf("</xliff:g>", index) + "</xliff:g>".length())) {
-            ++xliffCount;
+        int index = baseString.indexOf("<xliff:g");
+        while (index >= 0) {
+            xliffCount++;
+            index = baseString.indexOf("<xliff:g", baseString.indexOf("</xliff:g>", index) + "</xliff:g>".length());
         }
-
         int xliffCountLogic = 0;
-
-        for (int indexLogic = translatedString.indexOf("<xliff:g"); indexLogic >= 0; indexLogic = translatedString.indexOf("<xliff:g", translatedString.indexOf("</xliff:g>", indexLogic) + "</xliff:g>".length())) {
-            ++xliffCountLogic;
+        int indexLogic = translatedString.indexOf("<xliff:g");
+        while (indexLogic >= 0) {
+            xliffCountLogic++;
+            indexLogic = translatedString.indexOf("<xliff:g", translatedString.indexOf("</xliff:g>", indexLogic) + "</xliff:g>".length());
         }
-
-        return xliffCount != xliffCountLogic;
+        if (xliffCount != xliffCountLogic) {
+            return true;
+        }
+        return false;
     }
 
     public static boolean checkFormatedStringError(String translatedString, List<String> formatStringList) {
-        String formatString;
-        int index;
-        for (Iterator var3 = formatStringList.iterator(); var3.hasNext(); translatedString = translatedString.substring(0, index) + translatedString.substring(index + formatString.length())) {
-            formatString = (String) var3.next();
-            index = translatedString.indexOf(formatString);
+        for (String formatString : formatStringList) {
+            int index = translatedString.indexOf(formatString);
             if (index < 0) {
                 return true;
             }
+            translatedString = translatedString.substring(0, index) + translatedString.substring(index + formatString.length());
         }
-
         return false;
     }
 }
