@@ -27,10 +27,20 @@ import jxl.WorkbookSettings;
 public class XlsToXMLDirTest {
 
     private Class<?> clazz;
+    private String[] args = {"", "/home/mamh/fanyi/test.xls", "test"};
+    private File xmlFileDir;
+    private File xlsFile;
+    private Workbook workbook;
 
     @Before
     public void before() throws Exception {
         clazz = Class.forName("com.mage.stringtranslationtools.xls.XlsToXMLDir");
+
+        xmlFileDir = new File("test");
+        xlsFile = new File("/home/mamh/fanyi/test.xls");
+        WorkbookSettings workbookSettings = new WorkbookSettings();
+        workbookSettings.setEncoding("ISO-8859-15"); //关键代码，解决中文乱码
+        workbook = Workbook.getWorkbook(xlsFile, workbookSettings);
     }
 
     @After
@@ -42,7 +52,6 @@ public class XlsToXMLDirTest {
      */
     @Test
     public void testDoCollectAllStrings() throws Exception {
-        String[] args = {"", "/home/mamh/fanyi/test.xls", "test"};
         XlsToXMLDir.doCollectAllStrings(args);
     }
 
@@ -109,12 +118,6 @@ public class XlsToXMLDirTest {
      */
     @Test
     public void testProcessSeperateSheet() throws Exception {
-        File xmlFileDir = new File("test");
-        File xlsFile = new File("/home/mamh/fanyi/test.xls");
-        WorkbookSettings workbookSettings = new WorkbookSettings();
-        workbookSettings.setEncoding("ISO-8859-15"); //关键代码，解决中文乱码
-        Workbook workbook = Workbook.getWorkbook(xlsFile, workbookSettings);
-
         try {
             Method method = clazz.getDeclaredMethod("processSeperateSheet", Workbook.class, File.class);
             method.setAccessible(true);
@@ -130,17 +133,14 @@ public class XlsToXMLDirTest {
      */
     @Test
     public void testProcessOneSheet() throws Exception {
-        //TODO: Test goes here...
-        /*
         try {
-           Method method = XlsToXMLDir.getClass().getMethod("processOneSheet", Workbook.class, File.class);
-           method.setAccessible(true);
-           method.invoke(<Object>, <Parameters>);
-        } catch(NoSuchMethodException e) {
-        } catch(IllegalAccessException e) {
-        } catch(InvocationTargetException e) {
+            Method method = clazz.getDeclaredMethod("processOneSheet", Workbook.class, File.class);
+            method.setAccessible(true);
+            method.invoke(clazz, workbook, xmlFileDir);
+        } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+            e.printStackTrace();
         }
-        */
+
     }
 
     /**
