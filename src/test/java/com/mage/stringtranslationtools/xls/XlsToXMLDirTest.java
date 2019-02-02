@@ -166,17 +166,34 @@ public class XlsToXMLDirTest {
      */
     @Test
     public void testWriteItemsToXML() throws Exception {
-        //TODO: Test goes here...
-        /*
+        String valudesDir = "values";//语言目录名
+        List<Item> list = new ArrayList<>();
+        //这个list的第一个元素的 属性path=valuesDir 值决定了 存放目录的值
+        list.add(new Item("S:productName:exlight_settings_1", "/OTA", "", "Lighting effect setting"));
+
+        //list.add(new Item("S:productName:", "/ES", "", "Lighting effect setting"));//这个会报java.lang.IndexOutOfBoundsException : Invalid array range: 1 to 1 错误的，按照冒号分割出来的数组只有一个长度的。
+        list.add(new Item("S::exlight_settings_1", "/OTA", "", "Lighting effect setting"));
+        list.add(new Item("S:exlight_settings_1", "/OTA", "", "Lighting effect setting"));
+
+        list.add(new Item("S:exlight_settingsOTA_1", "/OTA", "", "Lighting effect setting"));
+        list.add(new Item("S:exlight_settingsOTA_2", "/OTA", "", "Lighting effect setting"));
+        list.add(new Item("S:exlight_settingsOTA_3", "/OTA", "", "Lighting effect setting"));
+
+        list.add(new Item("A:exlight_settings_array_OTA_3:0", "/OTA", "", "Lighting effect setting"));
+        list.add(new Item("A:exlight_settings_array_OTA_3:1", "/OTA", "", "Lighting effect setting"));
+        list.add(new Item("A:exlight_settings_array_OTA_3:2", "/OTA", "", "Lighting effect setting"));
+        list.add(new Item("P:exlight_settings_plurals_OTA_3:plurals0", "/OTA", "", "plurals Lighting effect setting"));
+        list.add(new Item("P:exlight_settings_plurals_OTA_3:plurals1", "/OTA", "", "plurals Lighting effect setting"));
+        list.add(new Item("P:exlight_settings_plurals_OTA_3:plurals2", "/OTA", "", "plurals Lighting effect setting"));
+
         try {
-           Method method = XlsToXMLDir.getClass().getMethod("writeItemsToXML", List<Item>.class, String.class, File.class);
-           method.setAccessible(true);
-           method.invoke(<Object>, <Parameters>);
-        } catch(NoSuchMethodException e) {
-        } catch(IllegalAccessException e) {
-        } catch(InvocationTargetException e) {
+            Method method = clazz.getDeclaredMethod("writeItemsToXML", List.class, String.class, File.class);
+            method.setAccessible(true);
+            method.invoke(clazz, list, valudesDir, xmlFileDir);
+        } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+            e.printStackTrace();
         }
-        */
+
     }
 
     /**
